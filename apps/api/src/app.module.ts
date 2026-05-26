@@ -22,6 +22,7 @@ import { LivestreamModule } from './modules/livestream/livestream.module';
 import { ElectionModule } from './modules/election/election.module';
 import { SearchModule } from './modules/search/search.module';
 import { QueueModule } from './modules/queue/queue.module';
+import { RekognitionModule } from './modules/rekognition/rekognition.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { QueueModule } from './modules/queue/queue.module';
     ElectionModule,
     SearchModule,
     QueueModule,
+    RekognitionModule,
   ],
 })
 export class AppModule {}

@@ -11,15 +11,26 @@ export class SearchService {
   ) {}
 
   async searchReports(query: string, country?: string, category?: string, page = 1, limit = 20) {
+    const tsQuery = this.toTsQuery(query);
+
     const qb = this.reportRepo.createQueryBuilder('report')
-      .leftJoinAndSelect('report.author', 'author')
-      .where('(report.title ILIKE :q OR report.description ILIKE :q)', { q: `%${query}%` });
+      .leftJoinAndSelect('report.author', 'author');
+
+    if (tsQuery) {
+      // Use PostgreSQL full-text search with ranking
+      qb.addSelect(`ts_rank(to_tsvector('english', report.title || ' ' || report.description), to_tsquery('english', :tsQuery))`, 'rank')
+        .where(`to_tsvector('english', report.title || ' ' || report.description) @@ to_tsquery('english', :tsQuery)`, { tsQuery })
+        .orderBy('rank', 'DESC');
+    } else {
+      // Fallback to ILIKE for short queries
+      qb.where('(report.title ILIKE :q OR report.description ILIKE :q)', { q: `%${query}%` })
+        .orderBy('report.createdAt', 'DESC');
+    }
 
     if (country) qb.andWhere('report.country = :country', { country });
     if (category) qb.andWhere('report.category = :category', { category });
 
     const [results, total] = await qb
-      .orderBy('report.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -28,24 +39,14 @@ export class SearchService {
   }
 
   async searchUsers(query: string, page = 1, limit = 20) {
-    const [results, total] = await this.userRepo.findAndCount({
-      where: [
-        { username: query ? undefined : undefined },
-      ],
-      order: { trustScore: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-
-    // Use query builder for ILIKE
     const qb = this.userRepo.createQueryBuilder('user')
       .where('(user.username ILIKE :q OR user.displayName ILIKE :q)', { q: `%${query}%` })
       .orderBy('user.trustScore', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
-    const [users, count] = await qb.getManyAndCount();
-    return { results: users, total: count, page };
+    const [results, total] = await qb.getManyAndCount();
+    return { results, total, page, totalPages: Math.ceil(total / limit) };
   }
 
   async getTrending(country: string, hours = 24) {
@@ -71,5 +72,12 @@ export class SearchService {
       .getMany();
 
     return reports.map((r) => r.title);
+  }
+
+  private toTsQuery(query: string): string {
+    // Convert user query to PostgreSQL tsquery format
+    const words = query.trim().split(/\s+/).filter((w) => w.length > 1);
+    if (words.length === 0) return '';
+    return words.map((w) => `${w}:*`).join(' & ');
   }
 }

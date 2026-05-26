@@ -73,4 +73,15 @@ export const api = {
     getPresignedUrl: (token: string, fileType: string, contentType: string) =>
       fetchAPI('/upload/presigned-url', { method: 'POST', body: JSON.stringify({ fileType, contentType }), token }),
   },
+  search: {
+    reports: (query: string, country?: string, page = 1) => fetchAPI(`/search/reports?query=${encodeURIComponent(query)}&country=${country || 'NG'}&page=${page}`),
+    trending: (country: string) => fetchAPI(`/search/trending?country=${country}`),
+    suggestions: (query: string, country?: string) => fetchAPI(`/search/suggestions?query=${encodeURIComponent(query)}&country=${country || 'NG'}`),
+  },
+  elections: {
+    feed: (country: string, election?: string, page = 1) => fetchAPI(`/elections/feed?country=${country}&election=${encodeURIComponent(election || '')}&page=${page}`),
+    incidents: (country: string, page = 1) => fetchAPI(`/elections/incidents?country=${country}&page=${page}`),
+    results: (country: string, election: string, state?: string) => fetchAPI(`/elections/results?country=${country}&election=${encodeURIComponent(election)}${state ? `&state=${state}` : ''}`),
+    hotspots: (country: string, election: string) => fetchAPI(`/elections/hotspots?country=${country}&election=${encodeURIComponent(election)}`),
+  },
 };

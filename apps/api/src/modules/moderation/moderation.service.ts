@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RekognitionService } from '../rekognition/rekognition.service';
 
 export interface ModerationResult {
   isApproved: boolean;
@@ -15,7 +16,10 @@ export class ModerationService {
   private readonly logger = new Logger(ModerationService.name);
   private readonly openaiKey: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly rekognition: RekognitionService,
+  ) {
     this.openaiKey = this.config.get('OPENAI_API_KEY', '');
   }
 
@@ -107,5 +111,11 @@ Respond in JSON: { "isApproved": boolean, "flags": string[], "confidence": 0-1, 
       confidence: flags.length === 0 ? 0.7 : 0.5,
       suggestedVerification: flags.length === 0 ? 'unverified' : 'unverified',
     };
+  }
+
+  async moderateImage(s3Key: string): Promise<{ isApproved: boolean; flags: string[] }> {
+    const result = await this.rekognition.moderateImage(s3Key);
+    this.logger.log(`Image moderation for ${s3Key}: approved=${result.isApproved}, flags=${result.flags.join(',')}`);
+    return { isApproved: result.isApproved, flags: result.flags };
   }
 }
