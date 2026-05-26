@@ -6,3 +6,4 @@ export { DonationEntity } from './donation.entity';
 export { MediaLicenseEntity } from './media-license.entity';
 export { EarningsEntity } from './earnings.entity';
 export { LivestreamEntity } from './livestream.entity';
+export { ElectionReportEntity } from './election-report.entity';

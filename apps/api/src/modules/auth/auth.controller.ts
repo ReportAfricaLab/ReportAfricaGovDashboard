@@ -40,6 +40,18 @@ class LoginDto {
   password: string;
 }
 
+class OAuthDto {
+  @IsString()
+  provider: string; // google, apple
+
+  @IsString()
+  token: string;
+
+  @IsString()
+  @IsOptional()
+  country?: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -52,5 +64,10 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('oauth')
+  oauth(@Body() dto: OAuthDto) {
+    return this.authService.oauthLogin(dto.provider, dto.token, dto.country);
   }
 }
