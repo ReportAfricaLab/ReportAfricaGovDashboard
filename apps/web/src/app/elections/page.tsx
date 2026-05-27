@@ -42,19 +42,24 @@ export default function ElectionsPage() {
     try {
       if (tab === 'feed') {
         const res = await fetch(`${API_URL}/elections/feed?country=NG&election=${encodeURIComponent(election)}`);
-        setFeed(await res.json());
+        const data = await res.json();
+        setFeed(Array.isArray(data) ? data : []);
       } else if (tab === 'incidents') {
         const res = await fetch(`${API_URL}/elections/incidents?country=NG`);
-        setIncidents(await res.json());
+        const data = await res.json();
+        setIncidents(Array.isArray(data) ? data : []);
       } else if (tab === 'results') {
         const res = await fetch(`${API_URL}/elections/results?country=NG&election=${encodeURIComponent(election)}`);
-        setResults(await res.json());
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data : []);
       } else if (tab === 'hotspots') {
         const res = await fetch(`${API_URL}/elections/hotspots?country=NG&election=${encodeURIComponent(election)}`);
-        setHotspots(await res.json());
+        const data = await res.json();
+        setHotspots(Array.isArray(data) ? data : []);
       } else if (tab === 'live') {
         const res = await fetch(`${API_URL}/elections/live?country=NG&election=${encodeURIComponent(election)}`);
-        setLiveStreams(await res.json());
+        const data = await res.json();
+        setLiveStreams(Array.isArray(data) ? data : []);
       }
     } catch {}
     setLoading(false);
@@ -309,7 +314,7 @@ function ElectionReportForm({ election, onClose, onSubmitted }: { election: stri
     if (!type) { alert('Select a report type'); return; }
     if (!description && type !== 'result_upload') { alert('Add a description'); return; }
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('ra_token');
     if (!token) { alert('Please log in first'); return; }
 
     setSubmitting(true);
@@ -342,7 +347,7 @@ function ElectionReportForm({ election, onClose, onSubmitted }: { election: stri
 
   const handleGoLive = async () => {
     if (!state) { alert('Enter your state before going live'); return; }
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('ra_token');
     if (!token) { alert('Please log in first'); return; }
 
     setSubmitting(true);
