@@ -41,12 +41,14 @@ export class ElectionService {
   }
 
   async getIncidents(country: string, page = 1, limit = 20) {
-    return this.electionRepo.find({
-      where: { country, type: 'violence' },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    return this.electionRepo
+      .createQueryBuilder('e')
+      .where('e.country = :country', { country })
+      .andWhere('e.type IN (:...types)', { types: ['violence', 'vote_buying', 'intimidation', 'ballot_snatching'] })
+      .orderBy('e.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
   }
 
   async getResults(country: string, electionName: string, state?: string) {
