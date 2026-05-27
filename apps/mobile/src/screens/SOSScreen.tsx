@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Vibration } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, StyleSheet, Alert, Vibration } from 'react-native';
 import { getCurrentLocation } from '../services/location';
 import { useAppStore } from '../store/useAppStore';
 import { theme } from '../theme';
@@ -21,6 +21,7 @@ export default function SOSScreen() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [selectedType, setSelectedType] = useState('');
+  const [broadcast, setBroadcast] = useState(false);
 
   const triggerSOS = async () => {
     if (!selectedType) { Alert.alert('Select Type', 'Please select the emergency type'); return; }
@@ -35,10 +36,11 @@ export default function SOSScreen() {
         latitude: loc.latitude,
         longitude: loc.longitude,
         type: selectedType,
+        broadcast,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       setSent(true);
-      Alert.alert('🚨 SOS Sent', 'Emergency alert sent to nearby users. Help is on the way.');
+      Alert.alert('🚨 SOS Sent', broadcast ? 'Emergency alert sent & livestream started.' : 'Emergency alert sent to nearby users. Help is on the way.');
     } catch (err) {
       Alert.alert('Error', 'Failed to send SOS. Try again.');
     } finally {
@@ -79,6 +81,14 @@ export default function SOSScreen() {
         ))}
       </View>
 
+      <View style={styles.broadcastRow}>
+        <View>
+          <Text style={styles.broadcastLabel}>📡 Live Broadcast</Text>
+          <Text style={styles.broadcastHint}>Auto-start livestream with SOS</Text>
+        </View>
+        <Switch value={broadcast} onValueChange={setBroadcast} trackColor={{ true: theme.colors.emergency }} />
+      </View>
+
       <TouchableOpacity
         style={[styles.sosBtn, sending && styles.sosBtnDisabled]}
         onPress={triggerSOS}
@@ -100,6 +110,9 @@ const styles = StyleSheet.create({
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 30 },
   typeBtn: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, backgroundColor: '#fff', borderWidth: 2, borderColor: theme.colors.light.border, width: '47%', alignItems: 'center' },
   typeBtnText: { fontSize: 14, fontWeight: '600', color: theme.colors.light.text },
+  broadcastRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.light.border, marginBottom: 20 },
+  broadcastLabel: { fontSize: 14, fontWeight: '600', color: theme.colors.light.text },
+  broadcastHint: { fontSize: 11, color: theme.colors.light.textSecondary, marginTop: 2 },
   sosBtn: { backgroundColor: theme.colors.emergency, paddingVertical: 20, borderRadius: 16, alignItems: 'center', marginBottom: 16 },
   sosBtnDisabled: { opacity: 0.6 },
   sosBtnText: { color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: 2 },

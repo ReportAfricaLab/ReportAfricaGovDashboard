@@ -71,6 +71,21 @@ export default function RegisterScreen({ navigation }: any) {
         <Text style={styles.btnText}>{loading ? 'Creating account...' : 'Create Account'}</Text>
       </TouchableOpacity>
 
+      <View style={styles.divider}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>or</Text>
+        <View style={styles.dividerLine} />
+      </View>
+
+      <View style={styles.oauthRow}>
+        <TouchableOpacity style={styles.oauthBtn} onPress={() => Alert.alert('Google Sign-In', 'Configure expo-auth-session for Google OAuth')}>
+          <Text style={styles.oauthBtnText}>G  Google</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.oauthBtn, styles.oauthBtnApple]} onPress={() => Alert.alert('Apple Sign-In', 'Configure expo-apple-authentication')}>
+          <Text style={[styles.oauthBtnText, { color: '#fff' }]}>  Apple</Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity onPress={() => navigation?.navigate('Login')}>
         <Text style={styles.link}>Already have an account? <Text style={styles.linkBold}>Sign In</Text></Text>
       </TouchableOpacity>
@@ -93,6 +108,13 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: theme.colors.primary, paddingVertical: 16, borderRadius: theme.borderRadius.sm, alignItems: 'center', marginTop: 12 },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#fff', fontSize: theme.fontSize.md, fontWeight: '700' },
-  link: { textAlign: 'center', marginTop: 24, fontSize: theme.fontSize.sm, color: theme.colors.light.textSecondary },
+  link: { textAlign: 'center', marginTop: 24, fontSize: theme.fontSize.sm, color: theme.colors.light.textSecondary, marginBottom: 40 },
   linkBold: { color: theme.colors.primary, fontWeight: '600' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: theme.colors.light.border },
+  dividerText: { marginHorizontal: 12, fontSize: 12, color: theme.colors.light.textSecondary },
+  oauthRow: { flexDirection: 'row', gap: 12 },
+  oauthBtn: { flex: 1, paddingVertical: 14, borderRadius: theme.borderRadius.sm, alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: theme.colors.light.border },
+  oauthBtnApple: { backgroundColor: '#000', borderColor: '#000' },
+  oauthBtnText: { fontSize: 14, fontWeight: '600', color: theme.colors.light.text },
 });

@@ -79,11 +79,17 @@ export default function HomeScreen() {
             <Text style={styles.brandName}>{brandName}</Text>
             <Text style={styles.subtitle}>Live Reports</Text>
           </View>
+          <TouchableOpacity style={styles.searchBtn} onPress={() => navigation.navigate('Search')}>
+            <Text style={styles.searchBtnText}>🔍</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.electionBtn} onPress={() => navigation.navigate('Elections')}>
+            <Text style={styles.electionBtnText}>🗳️</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.liveBtn} onPress={() => navigation.navigate('GoLive')}>
             <Text style={styles.liveBtnText}>● Live</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.createBtn} onPress={() => navigation.navigate('CreateReport')}>
-            <Text style={styles.createBtnText}>+ Report</Text>
+            <Text style={styles.createBtnText}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -111,7 +117,11 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: theme.fontSize.sm, color: theme.colors.light.textSecondary, marginTop: 2 },
   createBtn: { backgroundColor: theme.colors.emergency, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   createBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  liveBtn: { backgroundColor: '#000', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  searchBtn: { paddingHorizontal: 8, paddingVertical: 8 },
+  searchBtnText: { fontSize: 18 },
+  electionBtn: { paddingHorizontal: 8, paddingVertical: 8 },
+  electionBtnText: { fontSize: 18 },
+  liveBtn: { backgroundColor: '#000', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   liveBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   list: { padding: 16, gap: 12 },
   card: { backgroundColor: '#fff', borderRadius: theme.borderRadius.md, padding: 16, borderWidth: 1, borderColor: theme.colors.light.border },

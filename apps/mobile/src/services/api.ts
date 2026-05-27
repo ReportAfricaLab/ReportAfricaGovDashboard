@@ -3,6 +3,7 @@ import axios from 'axios';
 // Replace with your computer's local IP (run: ipconfig | findstr IPv4)
 const LOCAL_IP = '10.162.41.17';
 const API_BASE_URL = __DEV__ ? `http://${LOCAL_IP}:3001/api/v1` : 'https://api.reportafrica.com/api/v1';
+export const WS_URL = __DEV__ ? `http://${LOCAL_IP}:3001` : 'https://api.reportafrica.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -21,11 +22,17 @@ export const setAuthToken = (token: string | null) => {
   }
 };
 
+export const getAuthToken = () => authToken;
+
 export const authAPI = {
   register: (data: { email: string; username: string; displayName: string; password: string; country: string; latitude?: number; longitude?: number }) =>
     api.post('/auth/register', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
+  googleLogin: (data: { idToken: string }) =>
+    api.post('/auth/google', data),
+  appleLogin: (data: { identityToken: string; fullName?: string }) =>
+    api.post('/auth/apple', data),
 };
 
 export const usersAPI = {
@@ -54,6 +61,31 @@ export const donationsAPI = {
   create: (data: any) => api.post('/donations/campaigns', data),
   donate: (id: string, data: any) => api.post(`/donations/campaigns/${id}/donate`, data),
   verify: (reference: string) => api.get(`/donations/verify/${reference}`),
+};
+
+export const livestreamAPI = {
+  create: (data: { title: string; description?: string; latitude?: number; longitude?: number }) =>
+    api.post('/livestream/create', data),
+  goLive: (id: string) => api.patch(`/livestream/${id}/go-live`),
+  end: (id: string) => api.patch(`/livestream/${id}/end`),
+  getActive: (country?: string) => api.get(`/livestream/active${country ? `?country=${country}` : ''}`),
+  getRecordings: (country?: string) => api.get(`/livestream/recordings${country ? `?country=${country}` : ''}`),
+  getById: (id: string) => api.get(`/livestream/${id}`),
+  getChatHistory: (id: string) => api.get(`/livestream/${id}/chat`),
+};
+
+export const searchAPI = {
+  search: (query: string, country?: string, category?: string, page = 1) =>
+    api.get(`/search?q=${encodeURIComponent(query)}${country ? `&country=${country}` : ''}${category ? `&category=${category}` : ''}&page=${page}`),
+  trending: (country?: string) => api.get(`/search/trending${country ? `?country=${country}` : ''}`),
+  suggestions: (query: string) => api.get(`/search/suggestions?q=${encodeURIComponent(query)}`),
+};
+
+export const electionsAPI = {
+  getFeed: (country: string, page = 1) => api.get(`/elections/feed?country=${country}&page=${page}`),
+  getIncidents: (country: string, page = 1) => api.get(`/elections/incidents?country=${country}&page=${page}`),
+  getResults: (country: string) => api.get(`/elections/results?country=${country}`),
+  getHotspots: (country: string) => api.get(`/elections/hotspots?country=${country}`),
 };
 
 export default api;
