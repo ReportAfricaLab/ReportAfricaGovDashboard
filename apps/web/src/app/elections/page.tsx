@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
-type Tab = 'feed' | 'incidents' | 'results' | 'hotspots';
+type Tab = 'feed' | 'incidents' | 'results' | 'hotspots' | 'live';
 
 const INCIDENT_COLORS: Record<string, string> = {
   violence: '#DC2626',
@@ -30,6 +30,7 @@ export default function ElectionsPage() {
   const [incidents, setIncidents] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
   const [hotspots, setHotspots] = useState<any[]>([]);
+  const [liveStreams, setLiveStreams] = useState<any[]>([]);
   const [election, setElection] = useState('2027 General Election');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -51,6 +52,9 @@ export default function ElectionsPage() {
       } else if (tab === 'hotspots') {
         const res = await fetch(`${API_URL}/elections/hotspots?country=NG&election=${encodeURIComponent(election)}`);
         setHotspots(await res.json());
+      } else if (tab === 'live') {
+        const res = await fetch(`${API_URL}/elections/live?country=NG&election=${encodeURIComponent(election)}`);
+        setLiveStreams(await res.json());
       }
     } catch {}
     setLoading(false);
@@ -78,7 +82,7 @@ export default function ElectionsPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto">
-        {([['feed', '📰 Feed'], ['incidents', '⚠️ Incidents'], ['results', '📊 Results'], ['hotspots', '🔥 Hotspots']] as [Tab, string][]).map(([key, label]) => (
+        {([['feed', '📰 Feed'], ['live', '🔴 Live'], ['incidents', '⚠️ Incidents'], ['results', '📊 Results'], ['hotspots', '🔥 Hotspots']] as [Tab, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition ${tab === key ? 'bg-[#0F7B6C] text-white' : 'bg-gray-100 text-gray-600'}`}>
             {label}
@@ -168,6 +172,30 @@ export default function ElectionsPage() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Live Tab */}
+      {!loading && tab === 'live' && (
+        <div className="space-y-4">
+          {liveStreams.length === 0 ? (
+            <EmptyState icon="🔴" title="No election livestreams" desc="Citizens can go live from polling units during elections" />
+          ) : (
+            liveStreams.map((s: any) => (
+              <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded bg-red-600 text-white">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" /> LIVE
+                  </span>
+                  <span className="text-xs text-gray-500">{s.viewerCount || 0} watching</span>
+                  {s.electionState && <span className="text-xs text-gray-400">· {s.electionState}</span>}
+                  {s.electionPollingUnit && <span className="text-xs text-gray-400">· PU: {s.electionPollingUnit}</span>}
+                </div>
+                <p className="text-sm font-semibold text-gray-900">{s.title}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.user?.displayName || 'Anonymous'} · Started {new Date(s.startedAt).toLocaleTimeString()}</p>
+              </div>
+            ))
           )}
         </div>
       )}
@@ -312,6 +340,29 @@ function ElectionReportForm({ election, onClose, onSubmitted }: { election: stri
     }
   };
 
+  const handleGoLive = async () => {
+    if (!state) { alert('Enter your state before going live'); return; }
+    const token = localStorage.getItem('token');
+    if (!token) { alert('Please log in first'); return; }
+
+    setSubmitting(true);
+    try {
+      await api.livestream.create(token, {
+        title: `Election Live: ${state}${pollingUnit ? ` - PU ${pollingUnit}` : ''}`,
+        description: `Live from ${election}`,
+        electionName: election,
+        electionState: state,
+        electionPollingUnit: pollingUnit || undefined,
+      });
+      alert('Stream created! Go to the Live section to start broadcasting.');
+      onSubmitted();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create livestream');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
@@ -405,6 +456,17 @@ function ElectionReportForm({ election, onClose, onSubmitted }: { election: stri
           className="w-full py-3 text-sm font-bold text-white bg-[#0F7B6C] rounded-lg hover:bg-[#0B6E4F] disabled:opacity-50 transition">
           {submitting ? 'Submitting...' : 'Submit Report'}
         </button>
+
+        <div className="relative my-3">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
+          <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-gray-400">or</span></div>
+        </div>
+
+        <button onClick={handleGoLive} disabled={submitting}
+          className="w-full py-3 text-sm font-bold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition">
+          🔴 Go Live from Polling Unit
+        </button>
+        <p className="text-xs text-orange-500 text-center mt-2">⚠️ Ensure livestreaming is permitted at your polling unit</p>
       </div>
     </div>
   );

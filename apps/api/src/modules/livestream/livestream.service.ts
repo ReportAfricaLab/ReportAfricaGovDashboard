@@ -21,7 +21,7 @@ export class LivestreamService {
     this.secretAccessKey = this.config.get('AWS_SECRET_ACCESS_KEY', '');
   }
 
-  async createStream(userId: string, country: string, dto: { title: string; description?: string; category?: string; latitude?: number; longitude?: number }) {
+  async createStream(userId: string, country: string, dto: { title: string; description?: string; category?: string; latitude?: number; longitude?: number; electionName?: string; electionState?: string; electionPollingUnit?: string }) {
     // Create IVS channel via AWS API
     const channelData = await this.createIVSChannel(dto.title);
 
@@ -30,7 +30,7 @@ export class LivestreamService {
       country,
       title: dto.title,
       description: dto.description || '',
-      category: dto.category || 'general',
+      category: dto.electionName ? 'election' : (dto.category || 'general'),
       latitude: dto.latitude,
       longitude: dto.longitude,
       channelArn: channelData.channelArn,
@@ -38,6 +38,9 @@ export class LivestreamService {
       ingestEndpoint: channelData.ingestEndpoint,
       playbackUrl: channelData.playbackUrl,
       status: 'ready',
+      electionName: dto.electionName,
+      electionState: dto.electionState,
+      electionPollingUnit: dto.electionPollingUnit,
     });
 
     return this.streamRepo.save(stream);
@@ -91,6 +94,18 @@ export class LivestreamService {
       order: { createdAt: 'DESC' },
       take: 20,
     });
+  }
+
+  async getElectionLiveStreams(country: string, electionName?: string) {
+    const qb = this.streamRepo.createQueryBuilder('s')
+      .leftJoinAndSelect('s.user', 'user')
+      .where('s.country = :country', { country })
+      .andWhere('s.category = :category', { category: 'election' })
+      .andWhere('s.status = :status', { status: 'live' });
+
+    if (electionName) qb.andWhere('s.electionName = :electionName', { electionName });
+
+    return qb.orderBy('s.startedAt', 'DESC').getMany();
   }
 
   private async createIVSChannel(title: string): Promise<{ channelArn: string; streamKeyValue: string; ingestEndpoint: string; playbackUrl: string }> {

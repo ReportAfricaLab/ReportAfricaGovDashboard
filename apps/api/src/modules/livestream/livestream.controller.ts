@@ -12,6 +12,9 @@ class CreateStreamDto {
   @IsString() @IsOptional() category?: string;
   @IsNumber() @IsOptional() latitude?: number;
   @IsNumber() @IsOptional() longitude?: number;
+  @IsString() @IsOptional() electionName?: string;
+  @IsString() @IsOptional() electionState?: string;
+  @IsString() @IsOptional() electionPollingUnit?: string;
 }
 
 @Controller('livestream')
@@ -43,6 +46,11 @@ export class LivestreamController {
   @Get('live')
   getLiveStreams(@Query('country') country: string, @Query('page') page?: string) {
     return this.service.getLiveStreams(country || 'NG', Number(page) || 1);
+  }
+
+  @Get('election/live')
+  getElectionLiveStreams(@Query('country') country: string, @Query('election') election?: string) {
+    return this.service.getElectionLiveStreams(country || 'NG', election);
   }
 
   @Get('recordings')

@@ -86,6 +86,7 @@ export const electionsAPI = {
   getIncidents: (country: string, page = 1) => api.get(`/elections/incidents?country=${country}&page=${page}`),
   getResults: (country: string, election?: string) => api.get(`/elections/results?country=${country}${election ? `&election=${encodeURIComponent(election)}` : ''}`),
   getHotspots: (country: string, election?: string) => api.get(`/elections/hotspots?country=${country}${election ? `&election=${encodeURIComponent(election)}` : ''}`),
+  getLive: (country: string, election?: string) => api.get(`/elections/live?country=${country}${election ? `&election=${encodeURIComponent(election)}` : ''}`),
 };
 
 export default api;

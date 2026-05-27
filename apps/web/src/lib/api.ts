@@ -84,5 +84,6 @@ export const api = {
     results: (country: string, election: string, state?: string) => fetchAPI(`/elections/results?country=${country}&election=${encodeURIComponent(election)}${state ? `&state=${state}` : ''}`),
     hotspots: (country: string, election: string) => fetchAPI(`/elections/hotspots?country=${country}&election=${encodeURIComponent(election)}`),
     submit: (token: string, body: any) => fetchAPI('/elections/report', { method: 'POST', body: JSON.stringify(body), token }),
+    live: (country: string, election?: string) => fetchAPI(`/elections/live?country=${country}${election ? `&election=${encodeURIComponent(election)}` : ''}`),
   },
 };

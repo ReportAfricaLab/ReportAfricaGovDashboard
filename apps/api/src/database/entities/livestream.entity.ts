@@ -72,6 +72,19 @@ export class LivestreamEntity {
   @Column({ name: 'recording_url', nullable: true })
   recordingUrl: string;
 
+  @Column({ name: 'election_id', nullable: true })
+  @Index()
+  electionId: string;
+
+  @Column({ name: 'election_name', nullable: true })
+  electionName: string;
+
+  @Column({ name: 'election_state', nullable: true })
+  electionState: string;
+
+  @Column({ name: 'election_polling_unit', nullable: true })
+  electionPollingUnit: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getCurrentLocation } from '../services/location';
 import { theme } from '../theme';
 import axios from 'axios';
+import { livestreamAPI } from '../services/api';
 
 const API_URL = 'http://10.162.41.17:3001/api/v1';
 
@@ -72,6 +73,25 @@ export default function CreateElectionReportScreen({ navigation }: any) {
       } catch {}
     }
     return media;
+  };
+
+  const handleGoLive = async () => {
+    if (!state) { Alert.alert('Error', 'Enter your state before going live'); return; }
+    try {
+      const res = await livestreamAPI.create({
+        title: `Election Live: ${state}${pollingUnit ? ` - PU ${pollingUnit}` : ''}`,
+        description: `Live from ${election}`,
+        latitude: latitude || undefined,
+        longitude: longitude || undefined,
+        electionName: election,
+        electionState: state,
+        electionPollingUnit: pollingUnit || undefined,
+      } as any);
+      Alert.alert('Stream Created', 'Your election livestream is ready. Use a streaming app or tap Go Live from the Live section.');
+      navigation.goBack();
+    } catch {
+      Alert.alert('Error', 'Failed to create livestream');
+    }
   };
 
   const handleSubmit = async () => {
@@ -192,6 +212,13 @@ export default function CreateElectionReportScreen({ navigation }: any) {
         </View>
       )}
 
+      {/* Go Live */}
+      <Text style={styles.label}>Or go live from this polling unit</Text>
+      <TouchableOpacity style={styles.goLiveBtn} onPress={handleGoLive}>
+        <Text style={styles.goLiveBtnText}>🔴 Go Live</Text>
+      </TouchableOpacity>
+      <Text style={styles.disclaimer}>⚠️ Ensure livestreaming is permitted at your polling unit</Text>
+
       {/* Submit */}
       <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={submitting}>
         <Text style={styles.submitBtnText}>{submitting ? 'Submitting...' : 'Submit Report'}</Text>
@@ -227,4 +254,7 @@ const styles = StyleSheet.create({
   thumbRemoveText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   submitBtn: { marginTop: 24, backgroundColor: theme.colors.primary, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  goLiveBtn: { backgroundColor: '#000', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 4 },
+  goLiveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  disclaimer: { fontSize: 11, color: theme.colors.humanitarian, textAlign: 'center', marginTop: 8 },
 });

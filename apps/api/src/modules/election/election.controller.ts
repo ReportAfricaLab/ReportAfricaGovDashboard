@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Query, UseGuards, Request } from '@nestjs/
 import { AuthGuard } from '@nestjs/passport';
 import { IsString, IsOptional, IsNumber, IsObject, IsArray, IsIn } from 'class-validator';
 import { ElectionService } from './election.service';
+import { LivestreamService } from '../livestream/livestream.service';
 
 class SubmitElectionReportDto {
   @IsString() @IsIn(['result_upload', 'violence', 'vote_buying', 'intimidation', 'ballot_snatching', 'observer_report'])
@@ -20,7 +21,10 @@ class SubmitElectionReportDto {
 
 @Controller('elections')
 export class ElectionController {
-  constructor(private readonly service: ElectionService) {}
+  constructor(
+    private readonly service: ElectionService,
+    private readonly livestreamService: LivestreamService,
+  ) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Post('report')
@@ -46,5 +50,10 @@ export class ElectionController {
   @Get('hotspots')
   getHotspots(@Query('country') country: string, @Query('election') election: string) {
     return this.service.getHotspots(country || 'NG', election);
+  }
+
+  @Get('live')
+  getElectionLive(@Query('country') country: string, @Query('election') election?: string) {
+    return this.livestreamService.getElectionLiveStreams(country || 'NG', election);
   }
 }
