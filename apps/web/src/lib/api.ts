@@ -90,4 +90,33 @@ export const api = {
     submit: (token: string, body: any) => fetchAPI('/elections/report', { method: 'POST', body: JSON.stringify(body), token }),
     live: (country: string, election?: string) => fetchAPI(`/elections/live?country=${country}${election ? `&election=${encodeURIComponent(election)}` : ''}`),
   },
+  comments: {
+    getByReport: (reportId: string, page = 1) => fetchAPI(`/comments/report/${reportId}?page=${page}`),
+    create: (token: string, body: { reportId: string; text: string; parentId?: string }) => fetchAPI('/comments', { method: 'POST', body: JSON.stringify(body), token }),
+    delete: (token: string, id: string) => fetchAPI(`/comments/${id}`, { method: 'DELETE', token }),
+    like: (token: string, id: string) => fetchAPI(`/comments/${id}/like`, { method: 'PATCH', token }),
+  },
+  follows: {
+    follow: (token: string, userId: string) => fetchAPI(`/follows/${userId}`, { method: 'POST', token }),
+    unfollow: (token: string, userId: string) => fetchAPI(`/follows/${userId}`, { method: 'DELETE', token }),
+    isFollowing: (token: string, userId: string) => fetchAPI(`/follows/check/${userId}`, { token }),
+    getFollowers: (userId: string, page = 1) => fetchAPI(`/follows/${userId}/followers?page=${page}`),
+    getFollowing: (userId: string, page = 1) => fetchAPI(`/follows/${userId}/following?page=${page}`),
+    getCounts: (userId: string) => fetchAPI(`/follows/${userId}/counts`),
+    getFeed: (token: string, page = 1) => fetchAPI(`/follows/feed?page=${page}`, { token }),
+  },
+  leaderboard: {
+    getTop: (country: string, period = 'week', limit = 20) => fetchAPI(`/leaderboard?country=${country}&period=${period}&limit=${limit}`),
+    getMyRank: (token: string, country: string, period = 'week') => fetchAPI(`/leaderboard/me?country=${country}&period=${period}`, { token }),
+  },
+  watchlist: {
+    getAll: (token: string) => fetchAPI('/watchlist', { token }),
+    create: (token: string, body: { name: string; latitude: number; longitude: number; radiusKm?: number; categories?: string[] }) => fetchAPI('/watchlist', { method: 'POST', body: JSON.stringify(body), token }),
+    update: (token: string, id: string, body: any) => fetchAPI(`/watchlist/${id}`, { method: 'PATCH', body: JSON.stringify(body), token }),
+    delete: (token: string, id: string) => fetchAPI(`/watchlist/${id}`, { method: 'DELETE', token }),
+  },
+  tips: {
+    create: (body: { reportId: string; amount: number; email: string; message?: string }) => fetchAPI('/tips', { method: 'POST', body: JSON.stringify(body) }),
+    getByReport: (reportId: string) => fetchAPI(`/tips/report/${reportId}`),
+  },
 };

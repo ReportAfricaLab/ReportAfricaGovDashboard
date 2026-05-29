@@ -37,6 +37,24 @@ export default function ProfileScreen() {
 
       {/* Menu */}
       <View style={styles.menu}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Followers', { userId: user?.id })}>
+          <Text style={styles.menuIcon}>👥</Text>
+          <Text style={styles.menuText}>Followers & Following</Text>
+          <Text style={styles.menuArrow}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Leaderboard')}>
+          <Text style={styles.menuIcon}>🏆</Text>
+          <Text style={styles.menuText}>Leaderboard</Text>
+          <Text style={styles.menuArrow}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Watchlist')}>
+          <Text style={styles.menuIcon}>📍</Text>
+          <Text style={styles.menuText}>Watchlists & Alerts</Text>
+          <Text style={styles.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('LicenseRequests')}>
           <Text style={styles.menuIcon}>📄</Text>
           <Text style={styles.menuText}>License Requests</Text>

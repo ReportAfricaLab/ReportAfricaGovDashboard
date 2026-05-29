@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { reportsAPI } from '../services/api';
 import { theme } from '../theme';
 
 export default function ReportDetailScreen({ route }: any) {
   const { id } = route.params;
+  const navigation = useNavigation<any>();
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,6 +74,11 @@ export default function ReportDetailScreen({ route }: any) {
       </View>
 
       <Text style={styles.views}>👁️ {report.viewCount} views · 💬 {report.commentCount} comments</Text>
+
+      {/* Comments Button */}
+      <TouchableOpacity style={styles.commentsBtn} onPress={() => navigation.navigate('Comments', { reportId: id })}>
+        <Text style={styles.commentsBtnText}>💬 View Comments ({report.commentCount})</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -102,4 +109,6 @@ const styles = StyleSheet.create({
   disputeBtn: { flex: 1, paddingVertical: 12, backgroundColor: '#fef2f2', borderRadius: 8, alignItems: 'center' },
   disputeText: { fontSize: 14, fontWeight: '600', color: '#dc2626' },
   views: { fontSize: 12, color: theme.colors.light.textSecondary, textAlign: 'center' },
+  commentsBtn: { marginTop: 16, paddingVertical: 14, backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: theme.colors.light.border, alignItems: 'center' },
+  commentsBtnText: { fontSize: 14, fontWeight: '600', color: theme.colors.primary },
 });
