@@ -9,6 +9,7 @@ class TriggerSOSDto {
   @IsString() @IsIn(['fire', 'violence', 'accident', 'flood', 'security_threat', 'building_collapse', 'medical'])
   type: string;
   @IsString() @IsOptional() description?: string;
+  @IsOptional() broadcast?: boolean;
 }
 
 @Controller('emergency')
