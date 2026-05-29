@@ -36,14 +36,16 @@ export default function SearchPage() {
   const loadTrending = async () => {
     try {
       const res = await fetch(`${API_URL}/search/trending?country=NG`);
-      setTrending(await res.json());
+      const data = await res.json();
+      setTrending(Array.isArray(data) ? data : []);
     } catch {}
   };
 
   const loadSuggestions = async () => {
     try {
-      const res = await fetch(`${API_URL}/search/suggestions?query=${encodeURIComponent(query)}&country=NG`);
-      setSuggestions(await res.json());
+      const res = await fetch(`${API_URL}/search/suggestions?q=${encodeURIComponent(query)}&country=NG`);
+      const data = await res.json();
+      setSuggestions(Array.isArray(data) ? data : []);
     } catch {}
   };
 
@@ -54,7 +56,7 @@ export default function SearchPage() {
     setSearched(true);
     setSuggestions([]);
     try {
-      const res = await fetch(`${API_URL}/search/reports?query=${encodeURIComponent(searchQuery)}&country=NG`);
+      const res = await fetch(`${API_URL}/search/reports?q=${encodeURIComponent(searchQuery)}&country=NG`);
       const data = await res.json();
       setResults(data.results || []);
       setTotal(data.total || 0);
