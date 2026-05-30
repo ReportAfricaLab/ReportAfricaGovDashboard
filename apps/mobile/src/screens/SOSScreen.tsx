@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Switch, StyleSheet, Alert, Vibration } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, StyleSheet, Alert, Vibration, TextInput } from 'react-native';
 import { getCurrentLocation } from '../services/location';
 import { useAppStore } from '../store/useAppStore';
 import { theme } from '../theme';
@@ -13,6 +13,7 @@ const EMERGENCY_TYPES = [
   { key: 'accident', label: '🚗 Accident', color: '#EA580C' },
   { key: 'flood', label: '🌊 Flood', color: '#2563EB' },
   { key: 'security_threat', label: '🚨 Security', color: '#991B1B' },
+  { key: 'building_collapse', label: '🏚️ Collapse', color: '#78350F' },
   { key: 'medical', label: '🏥 Medical', color: '#059669' },
 ];
 
@@ -22,6 +23,7 @@ export default function SOSScreen() {
   const [sent, setSent] = useState(false);
   const [selectedType, setSelectedType] = useState('');
   const [broadcast, setBroadcast] = useState(false);
+  const [description, setDescription] = useState('');
 
   const triggerSOS = async () => {
     if (!selectedType) { Alert.alert('Select Type', 'Please select the emergency type'); return; }
@@ -36,6 +38,7 @@ export default function SOSScreen() {
         latitude: loc.latitude,
         longitude: loc.longitude,
         type: selectedType,
+        description: description || undefined,
         broadcast,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -89,6 +92,17 @@ export default function SOSScreen() {
         <Switch value={broadcast} onValueChange={setBroadcast} trackColor={{ true: theme.colors.emergency }} />
       </View>
 
+      {/* Description */}
+      <TextInput
+        style={styles.descInput}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Any additional details (optional)..."
+        multiline
+        numberOfLines={2}
+        maxLength={300}
+      />
+
       <TouchableOpacity
         style={[styles.sosBtn, sending && styles.sosBtnDisabled]}
         onPress={triggerSOS}
@@ -117,6 +131,7 @@ const styles = StyleSheet.create({
   sosBtnDisabled: { opacity: 0.6 },
   sosBtnText: { color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: 2 },
   disclaimer: { textAlign: 'center', fontSize: 12, color: theme.colors.light.textSecondary },
+  descInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: theme.colors.light.border, borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 20, textAlignVertical: 'top', minHeight: 60 },
   sentBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   sentIcon: { fontSize: 60, marginBottom: 16 },
   sentTitle: { fontSize: 22, fontWeight: '700', color: theme.colors.primary },

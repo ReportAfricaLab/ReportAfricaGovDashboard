@@ -77,11 +77,16 @@ export class EmergencyService {
 
   async getActiveEmergencies(country: string) {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    return this.reportRepo.find({
-      where: { country, category: 'emergency', severity: 'critical' },
-      order: { createdAt: 'DESC' },
-      take: 20,
-    });
+    return this.reportRepo
+      .createQueryBuilder('report')
+      .leftJoinAndSelect('report.author', 'author')
+      .where('report.country = :country', { country })
+      .andWhere('report.category = :category', { category: 'emergency' })
+      .andWhere('report.severity = :severity', { severity: 'critical' })
+      .andWhere('report."created_at" > :oneHourAgo', { oneHourAgo })
+      .orderBy('report."created_at"', 'DESC')
+      .take(20)
+      .getMany();
   }
 
   private getTypeLabel(type: string): string {

@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useI18n } from '../store/useI18n';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { reportsAPI } from '../services/api';
+import api from '../services/api';
 import { offlineQueue } from '../services/offline-queue';
 import { getCurrentLocation } from '../services/location';
 import { theme } from '../theme';
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [activeEmergencies, setActiveEmergencies] = useState<any[]>([]);
 
   const brandName = COUNTRY_CONFIG[viewingCountry]?.brandName || COUNTRY_CONFIG[viewingCountry]?.name || 'ReportAfrica';
 
@@ -49,7 +51,11 @@ export default function HomeScreen() {
       setPendingCount(count);
     };
     checkStatus();
-    const interval = setInterval(checkStatus, 10000); // Check every 10s
+    const interval = setInterval(checkStatus, 10000);
+    // Load active emergencies
+    api.get(`/emergency/active?country=${viewingCountry}`).then((res) => {
+      setActiveEmergencies(Array.isArray(res.data) ? res.data : []);
+    }).catch(() => {});
     return () => clearInterval(interval);
   }, []);
 
@@ -160,6 +166,18 @@ export default function HomeScreen() {
           ))}
         </View>
       )}
+      {/* Active Emergencies Banner */}
+      {activeEmergencies.length > 0 && (
+        <View style={styles.emergencyBanner}>
+          <Text style={styles.emergencyBannerTitle}>🚨 Active Emergencies Nearby</Text>
+          {activeEmergencies.slice(0, 3).map((e: any) => (
+            <TouchableOpacity key={e.id} style={styles.emergencyItem} onPress={() => navigation.navigate('ReportDetail', { id: e.id })}>
+              <Text style={styles.emergencyItemText}>{e.title}</Text>
+              <Text style={styles.emergencyItemTime}>{new Date(e.createdAt).toLocaleTimeString()}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
       <FlatList
         data={reports}
         keyExtractor={(item) => item.id}
@@ -197,6 +215,11 @@ const styles = StyleSheet.create({
   countryChipActive: { backgroundColor: theme.colors.primary },
   countryChipText: { fontSize: 11, color: theme.colors.light.textSecondary },
   countryChipTextActive: { color: '#fff', fontWeight: '600' },
+  emergencyBanner: { backgroundColor: '#fef2f2', borderBottomWidth: 1, borderBottomColor: '#fecaca', paddingHorizontal: 16, paddingVertical: 10 },
+  emergencyBannerTitle: { fontSize: 13, fontWeight: '700', color: '#dc2626', marginBottom: 6 },
+  emergencyItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  emergencyItemText: { fontSize: 12, color: '#991b1b', flex: 1 },
+  emergencyItemTime: { fontSize: 10, color: '#dc2626' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logo: { width: 40, height: 40 },
   brandName: { fontSize: theme.fontSize.xl, fontWeight: '700', color: theme.colors.primary },
