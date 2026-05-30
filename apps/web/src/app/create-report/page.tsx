@@ -20,7 +20,7 @@ export default function CreateReportPage() {
   const { token, isAuthenticated } = useAuth();
   const [form, setForm] = useState({ title: '', description: '', category: '', severity: 'medium', isAnonymous: false });
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [mediaFiles, setMediaFiles] = useState<{ file: File; preview: string; type: string }[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<{ file: File; preview: string; type: string; blurredUrl?: string; blurring?: boolean; s3Key?: string }[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +50,8 @@ export default function CreateReportPage() {
           const fileType = media.type.startsWith('video') ? 'video' : 'image';
           const { uploadUrl, fileUrl } = await api.upload.getPresignedUrl(token, fileType, media.file.type);
           await fetch(uploadUrl, { method: 'PUT', body: media.file, headers: { 'Content-Type': media.file.type } });
-          mediaUrls.push(fileUrl);
+          // Use blurred URL if available
+          mediaUrls.push(media.blurredUrl || fileUrl);
         } catch {}
       }
       await api.reports.create(token, { ...form, ...location, mediaUrls });
@@ -70,6 +71,9 @@ export default function CreateReportPage() {
       file,
       preview: URL.createObjectURL(file),
       type: file.type,
+      blurredUrl: undefined,
+      blurring: false,
+      s3Key: undefined,
     }));
     setMediaFiles((prev) => [...prev, ...newFiles]);
   };
@@ -79,6 +83,46 @@ export default function CreateReportPage() {
       URL.revokeObjectURL(prev[index].preview);
       return prev.filter((_, i) => i !== index);
     });
+  };
+
+  const handleBlurFaces = async (index: number) => {
+    const media = mediaFiles[index];
+    if (media.type.startsWith('video')) { alert('Video face blur coming soon!'); return; }
+    if (!token) return;
+
+    setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurring: true } : m));
+
+    try {
+      // Upload image to get S3 key
+      const fileType = 'image';
+      const { uploadUrl, fileUrl } = await api.upload.getPresignedUrl(token, fileType, media.file.type);
+      await fetch(uploadUrl, { method: 'PUT', body: media.file, headers: { 'Content-Type': media.file.type } });
+      const s3Key = fileUrl.split('.com/')[1] || fileUrl;
+
+      // Call face blur API
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      const res = await fetch(`${API_URL}/face-blur`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ s3Key }),
+      });
+      const data = await res.json();
+
+      if (data.blurred) {
+        setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurredUrl: data.blurredUrl, blurring: false, s3Key } : m));
+        alert(`${data.facesDetected} face(s) detected and blurred!`);
+      } else {
+        setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurring: false, s3Key } : m));
+        alert('No faces detected in this image.');
+      }
+    } catch {
+      setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurring: false } : m));
+      alert('Face blur failed. Try again.');
+    }
+  };
+
+  const handleUndoBlur = (index: number) => {
+    setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurredUrl: undefined } : m));
   };
 
   return (
@@ -149,16 +193,42 @@ export default function CreateReportPage() {
           <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden"
             onChange={(e) => handleMediaAdd(e.target.files)} />
           {mediaFiles.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {mediaFiles.map((m, i) => (
-                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-                  {m.type.startsWith('video') ? (
-                    <video src={m.preview} className="w-full h-full object-cover" />
-                  ) : (
-                    <img src={m.preview} alt="" className="w-full h-full object-cover" />
+                <div key={i} className="relative">
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    {m.type.startsWith('video') ? (
+                      <video src={m.preview} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={m.blurredUrl || m.preview} alt="" className="w-full h-full object-cover" />
+                    )}
+                    <button type="button" onClick={() => removeMedia(i)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white text-xs rounded-full flex items-center justify-center">✕</button>
+                    {m.blurredUrl && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-green-600/85 text-white text-[10px] font-bold text-center py-0.5">✓ Blurred</div>
+                    )}
+                    {m.blurring && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-2xl">⏳</span>
+                      </div>
+                    )}
+                  </div>
+                  {!m.type.startsWith('video') && (
+                    m.blurredUrl ? (
+                      <button type="button" onClick={() => handleUndoBlur(i)}
+                        className="w-full mt-1 py-1 text-[10px] font-semibold text-red-600 bg-red-50 rounded">
+                        Undo Blur
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => handleBlurFaces(i)} disabled={m.blurring}
+                        className="w-full mt-1 py-1 text-[10px] font-semibold text-purple-700 bg-purple-50 rounded disabled:opacity-50">
+                        🔲 Blur Faces
+                      </button>
+                    )
                   )}
-                  <button type="button" onClick={() => removeMedia(i)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white text-xs rounded-full flex items-center justify-center">✕</button>
+                  {m.type.startsWith('video') && (
+                    <p className="text-[10px] text-gray-400 text-center mt-1">🎬 Video</p>
+                  )}
                 </div>
               ))}
             </div>
