@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert,
 import * as ImagePicker from 'expo-image-picker';
 import { useAppStore } from '../store/useAppStore';
 import { useI18n } from '../store/useI18n';
-import { reportsAPI } from '../services/api';
+import { reportsAPI, faceBlurAPI } from '../services/api';
 import { getCurrentLocation } from '../services/location';
 import { offlineQueue } from '../services/offline-queue';
 import { voiceRecorder } from '../services/voice-recorder';
@@ -25,7 +25,7 @@ export default function CreateReportScreen() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [mediaFiles, setMediaFiles] = useState<{ uri: string; type: string; fileName: string }[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<{ uri: string; type: string; fileName: string; blurredUri?: string; blurring?: boolean; s3Key?: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -67,13 +67,59 @@ export default function CreateReportScreen() {
       try {
         const fileType = media.type.startsWith('video') ? 'video' : 'image';
         const res = await axios.post(`${API_URL}/upload/presigned-url`, { fileType, contentType: media.type }, { headers: { Authorization: `Bearer ${token}` } });
-        const { uploadUrl, fileUrl } = res.data;
+        const { uploadUrl, fileUrl, key } = res.data;
         const blob = await fetch(media.uri).then((r) => r.blob());
         await fetch(uploadUrl, { method: 'PUT', body: blob, headers: { 'Content-Type': media.type } });
-        urls.push(fileUrl);
+
+        // Store S3 key for face blur
+        media.s3Key = key || fileUrl.split('.com/')[1];
+
+        // Use blurred URL if face blur was applied
+        urls.push(media.blurredUri || fileUrl);
       } catch {}
     }
     return urls;
+  };
+
+  const handleBlurFaces = async (index: number) => {
+    const media = mediaFiles[index];
+    if (media.type.startsWith('video')) {
+      Alert.alert('Coming Soon', 'Video face blur will be available in a future update.');
+      return;
+    }
+
+    // Upload image first if not already uploaded
+    const { token } = useAppStore.getState();
+    setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurring: true } : m));
+
+    try {
+      let s3Key = media.s3Key;
+      if (!s3Key) {
+        // Upload to get S3 key
+        const res = await axios.post(`${API_URL}/upload/presigned-url`, { fileType: 'image', contentType: media.type }, { headers: { Authorization: `Bearer ${token}` } });
+        const { uploadUrl, fileUrl, key } = res.data;
+        const blob = await fetch(media.uri).then((r) => r.blob());
+        await fetch(uploadUrl, { method: 'PUT', body: blob, headers: { 'Content-Type': media.type } });
+        s3Key = key || fileUrl.split('.com/')[1];
+      }
+
+      // Call face blur API
+      const blurRes = await faceBlurAPI.blur(s3Key!);
+      if (blurRes.data?.blurred) {
+        setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurredUri: blurRes.data.blurredUrl, blurring: false, s3Key } : m));
+        Alert.alert('Faces Blurred', `${blurRes.data.facesDetected} face(s) detected and blurred.`);
+      } else {
+        setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurring: false, s3Key } : m));
+        Alert.alert('No Faces', 'No faces were detected in this image.');
+      }
+    } catch {
+      setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurring: false } : m));
+      Alert.alert('Error', 'Face blur failed. Try again.');
+    }
+  };
+
+  const handleUndoBlur = (index: number) => {
+    setMediaFiles((prev) => prev.map((m, i) => i === index ? { ...m, blurredUri: undefined } : m));
   };
 
   const handleVoiceRecord = async () => {
@@ -193,11 +239,29 @@ export default function CreateReportScreen() {
       {mediaFiles.length > 0 && (
         <View style={styles.mediaGrid}>
           {mediaFiles.map((m, i) => (
-            <View key={i} style={styles.mediaThumbnail}>
-              <Image source={{ uri: m.uri }} style={styles.mediaImage} />
-              <TouchableOpacity style={styles.mediaRemove} onPress={() => removeMedia(i)}>
-                <Text style={styles.mediaRemoveText}>✕</Text>
-              </TouchableOpacity>
+            <View key={i} style={styles.mediaThumbnailWrap}>
+              <View style={styles.mediaThumbnail}>
+                <Image source={{ uri: m.blurredUri || m.uri }} style={styles.mediaImage} />
+                <TouchableOpacity style={styles.mediaRemove} onPress={() => removeMedia(i)}>
+                  <Text style={styles.mediaRemoveText}>✕</Text>
+                </TouchableOpacity>
+                {m.blurredUri && <View style={styles.blurredBadge}><Text style={styles.blurredBadgeText}>✓ Blurred</Text></View>}
+                {m.blurring && <View style={styles.blurringOverlay}><Text style={styles.blurringText}>⏳</Text></View>}
+              </View>
+              {!m.type.startsWith('video') && (
+                m.blurredUri ? (
+                  <TouchableOpacity style={styles.undoBlurBtn} onPress={() => handleUndoBlur(i)}>
+                    <Text style={styles.undoBlurText}>Undo Blur</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity style={styles.blurFacesBtn} onPress={() => handleBlurFaces(i)} disabled={m.blurring}>
+                    <Text style={styles.blurFacesBtnText}>🕲 Blur Faces</Text>
+                  </TouchableOpacity>
+                )
+              )}
+              {m.type.startsWith('video') && (
+                <Text style={styles.videoLabel}>🎬 Video</Text>
+              )}
             </View>
           ))}
         </View>
@@ -248,11 +312,21 @@ const styles = StyleSheet.create({
   mediaRow: { flexDirection: 'row', gap: 10 },
   mediaBtn: { flex: 1, paddingVertical: 14, borderRadius: 10, borderWidth: 2, borderStyle: 'dashed', borderColor: theme.colors.light.border, alignItems: 'center', backgroundColor: '#fff' },
   mediaBtnText: { fontSize: 14, color: theme.colors.light.textSecondary, fontWeight: '600' },
-  mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  mediaThumbnail: { width: 80, height: 80, borderRadius: 8, overflow: 'hidden', position: 'relative' },
+  mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 },
+  mediaThumbnailWrap: { width: 100, alignItems: 'center' },
+  mediaThumbnail: { width: 100, height: 100, borderRadius: 8, overflow: 'hidden', position: 'relative' },
   mediaImage: { width: '100%', height: '100%' },
   mediaRemove: { position: 'absolute', top: 2, right: 2, width: 20, height: 20, borderRadius: 10, backgroundColor: '#D92D20', alignItems: 'center', justifyContent: 'center' },
   mediaRemoveText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  blurredBadge: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(5,150,105,0.85)', paddingVertical: 2, alignItems: 'center' },
+  blurredBadgeText: { color: '#fff', fontSize: 9, fontWeight: '700' },
+  blurringOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  blurringText: { fontSize: 24 },
+  blurFacesBtn: { marginTop: 4, paddingVertical: 4, paddingHorizontal: 6, backgroundColor: '#ede9fe', borderRadius: 6, alignItems: 'center' },
+  blurFacesBtnText: { fontSize: 10, fontWeight: '600', color: '#6d28d9' },
+  undoBlurBtn: { marginTop: 4, paddingVertical: 4, paddingHorizontal: 6, backgroundColor: '#fef2f2', borderRadius: 6, alignItems: 'center' },
+  undoBlurText: { fontSize: 10, fontWeight: '600', color: '#dc2626' },
+  videoLabel: { marginTop: 4, fontSize: 10, color: theme.colors.light.textSecondary },
   voiceBtn: { marginTop: 8, paddingVertical: 10, backgroundColor: '#ede9fe', borderRadius: 8, alignItems: 'center' },
   voiceBtnRecording: { backgroundColor: '#fecaca' },
   voiceBtnText: { fontSize: 13, fontWeight: '600', color: '#6d28d9' },

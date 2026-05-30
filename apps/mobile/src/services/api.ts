@@ -149,4 +149,8 @@ export const voiceAPI = {
   transcribe: (audioUrl: string, language = 'en') => api.post('/voice/transcribe', { audioUrl, language }),
 };
 
+export const faceBlurAPI = {
+  blur: (s3Key: string) => api.post('/face-blur', { s3Key }),
+};
+
 export default api;
