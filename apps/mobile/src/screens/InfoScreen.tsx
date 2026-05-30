@@ -70,7 +70,7 @@ const PAGES: Record<string, { title: string; content: () => React.ReactNode }> =
           {`• Report only what you personally witness\n• Provide accurate location and details\n• Verify other reports honestly\n• Respect privacy — use face blur\n• Report emergencies to authorities first`}
         </Section>
         <Section title="❌ Don't">
-          {`• Submit false or misleading reports\n• Post hate speech or incitement to violence\n• Harass or doxx other users\n• Spam with duplicate content\n• Manipulate trust scores\n• Create fraudulent campaigns`}
+          {`• Submit false or misleading reports\n• Post hate speech or incitement to violence\n• Harass or doxx other users\n• Spam with duplicate content\n• Manipulate trust scores\n• Create fraudulent campaigns\n• Upload, share, or distribute pornographic, sexually explicit, or nude content — this results in an immediate permanent ban`}
         </Section>
         <Section title="Enforcement">
           Violations result in warnings, temporary suspensions, or permanent bans depending on severity.

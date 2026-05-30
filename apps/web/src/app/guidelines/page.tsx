@@ -29,6 +29,7 @@ export default function GuidelinesPage() {
             <li className="flex gap-2"><span>•</span> Manipulate trust scores through fake verifications</li>
             <li className="flex gap-2"><span>•</span> Create fraudulent donation campaigns</li>
             <li className="flex gap-2"><span>•</span> Share graphic violence without content warnings</li>
+            <li className="flex gap-2"><span>•</span> Upload, share, or distribute pornographic, sexually explicit, or nude content — this results in an immediate permanent ban with no prior warning</li>
           </ul>
         </section>
 
