@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react-native';
 import RootNavigator from './src/navigation/RootNavigator';
 import { useI18n } from './src/store/useI18n';
 import { useAppStore } from './src/store/useAppStore';
+import { offlineQueue } from './src/services/offline-queue';
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
@@ -21,6 +22,8 @@ function App() {
   useEffect(() => {
     initFromCountry(userCountry);
     initDarkMode();
+    offlineQueue.init();
+    return () => offlineQueue.destroy();
   }, []);
 
   useEffect(() => {

@@ -1,8 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
 import { reportsAPI } from './api';
 
 const QUEUE_KEY = '@reportafrica_offline_queue';
+
+const getStorage = () => require('@react-native-async-storage/async-storage').default;
+const getNetInfo = () => require('@react-native-community/netinfo').default;
 
 export interface QueuedReport {
   id: string;
@@ -25,11 +26,14 @@ class OfflineQueueService {
 
   // Start listening for connectivity changes
   init() {
-    this.unsubscribe = NetInfo.addEventListener((state) => {
-      if (state.isConnected && state.isInternetReachable) {
-        this.syncAll();
-      }
-    });
+    try {
+      const NetInfo = getNetInfo();
+      this.unsubscribe = NetInfo.addEventListener((state: any) => {
+        if (state.isConnected && state.isInternetReachable) {
+          this.syncAll();
+        }
+      });
+    } catch {}
   }
 
   destroy() {
@@ -46,13 +50,15 @@ class OfflineQueueService {
       retryCount: 0,
     };
     queue.push(entry);
-    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    try { await getStorage().setItem(QUEUE_KEY, JSON.stringify(queue)); } catch {}
     return entry;
   }
 
   async getQueue(): Promise<QueuedReport[]> {
-    const raw = await AsyncStorage.getItem(QUEUE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    try {
+      const raw = await getStorage().getItem(QUEUE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
   }
 
   async getPendingCount(): Promise<number> {
@@ -63,7 +69,7 @@ class OfflineQueueService {
   async removeFromQueue(id: string) {
     const queue = await this.getQueue();
     const filtered = queue.filter((r) => r.id !== id);
-    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(filtered));
+    try { await getStorage().setItem(QUEUE_KEY, JSON.stringify(filtered)); } catch {}
   }
 
   async syncAll() {
@@ -75,7 +81,7 @@ class OfflineQueueService {
       const pending = queue.filter((r) => r.status === 'pending' || r.status === 'failed');
 
       for (const report of pending) {
-        if (report.retryCount >= 3) continue; // Skip after 3 failures
+        if (report.retryCount >= 3) continue;
 
         try {
           report.status = 'syncing';
@@ -89,10 +95,9 @@ class OfflineQueueService {
             latitude: report.latitude,
             longitude: report.longitude,
             isAnonymous: report.isAnonymous,
-            mediaUrls: [], // Media upload handled separately for offline
+            mediaUrls: [], // Media not available offline
           });
 
-          // Success — remove from queue
           await this.removeFromQueue(report.id);
         } catch {
           report.status = 'failed';
@@ -106,12 +111,15 @@ class OfflineQueueService {
   }
 
   async isOnline(): Promise<boolean> {
-    const state = await NetInfo.fetch();
-    return !!(state.isConnected && state.isInternetReachable);
+    try {
+      const NetInfo = getNetInfo();
+      const state = await NetInfo.fetch();
+      return !!(state.isConnected && state.isInternetReachable);
+    } catch { return true; } // Assume online if check fails
   }
 
   private async saveQueue(queue: QueuedReport[]) {
-    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    try { await getStorage().setItem(QUEUE_KEY, JSON.stringify(queue)); } catch {}
   }
 }
 

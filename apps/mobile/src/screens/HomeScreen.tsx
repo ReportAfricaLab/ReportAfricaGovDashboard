@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useI18n } from '../store/useI18n';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { reportsAPI } from '../services/api';
+import { offlineQueue } from '../services/offline-queue';
 import { getCurrentLocation } from '../services/location';
 import { theme } from '../theme';
 import { COUNTRY_CONFIG } from '../constants';
@@ -33,11 +34,23 @@ export default function HomeScreen() {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [sort, setSort] = useState<'smart' | 'latest'>('smart');
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const brandName = COUNTRY_CONFIG[viewingCountry]?.brandName || COUNTRY_CONFIG[viewingCountry]?.name || 'ReportAfrica';
 
   useEffect(() => {
     getCurrentLocation().then((loc) => { if (loc) setLocation(loc); }).catch(() => {});
+    // Check offline status and pending queue
+    const checkStatus = async () => {
+      const online = await offlineQueue.isOnline();
+      setIsOffline(!online);
+      const count = await offlineQueue.getPendingCount();
+      setPendingCount(count);
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000); // Check every 10s
+    return () => clearInterval(interval);
   }, []);
 
   const loadFeed = async () => {
@@ -85,6 +98,18 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Offline Banner */}
+      {isOffline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineBannerText}>⚠️ You are offline. Reports will be saved and synced later.</Text>
+        </View>
+      )}
+      {/* Pending Queue Badge */}
+      {pendingCount > 0 && !isOffline && (
+        <View style={styles.pendingBanner}>
+          <Text style={styles.pendingBannerText}>📤 {pendingCount} report{pendingCount > 1 ? 's' : ''} syncing...</Text>
+        </View>
+      )}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
@@ -150,6 +175,10 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.light.background },
+  offlineBanner: { backgroundColor: '#fef2f2', paddingVertical: 8, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#fecaca' },
+  offlineBannerText: { fontSize: 12, color: '#dc2626', fontWeight: '600', textAlign: 'center' },
+  pendingBanner: { backgroundColor: '#eff6ff', paddingVertical: 8, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#bfdbfe' },
+  pendingBannerText: { fontSize: 12, color: '#2563eb', fontWeight: '600', textAlign: 'center' },
   header: { paddingHorizontal: 16, paddingTop: 60, paddingBottom: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: theme.colors.light.border },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   filterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff' },
