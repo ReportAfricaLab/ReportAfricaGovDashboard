@@ -77,6 +77,7 @@ import { VoiceModule } from './modules/voice/voice.module';
         database: config.get('DATABASE_NAME', 'reportafrica'),
         autoLoadEntities: true,
         synchronize: config.get('NODE_ENV') !== 'production',
+        ssl: config.get('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       }),
     }),
     AuthModule,
