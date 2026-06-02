@@ -1,0 +1,6 @@
+{
+  "commands": [
+    "cd /home/ec2-user && git clone https://TOKEN@github.com/ReportAfricaLab/reportafricabackend.git reportafrica",
+    "cd /home/ec2-user/reportafrica && docker build -t reportafrica-api -f apps/api/Dockerfile ."
+  ]
+}

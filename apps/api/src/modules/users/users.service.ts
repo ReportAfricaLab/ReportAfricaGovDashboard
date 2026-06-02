@@ -39,4 +39,21 @@ export class UsersService {
     await this.userRepo.update(id, data);
     return this.findById(id) as Promise<UserEntity>;
   }
+
+  async setPasswordResetToken(id: string, token: string, expires: Date): Promise<void> {
+    await this.userRepo.update(id, { passwordResetToken: token, passwordResetExpires: expires });
+  }
+
+  async findByResetToken(token: string): Promise<UserEntity | null> {
+    return this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.passwordResetToken')
+      .addSelect('user.passwordResetExpires')
+      .where('user.passwordResetToken = :token', { token })
+      .getOne();
+  }
+
+  async updatePassword(id: string, hashedPassword: string): Promise<void> {
+    await this.userRepo.update(id, { password: hashedPassword, passwordResetToken: null, passwordResetExpires: null });
+  }
 }

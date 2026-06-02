@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "docker stop reportafrica-api 2>/dev/null || true",
+    "docker rm reportafrica-api 2>/dev/null || true",
+    "docker run -d --name reportafrica-api --restart always -p 3001:3001 -e NODE_ENV=production -e PORT=3001 -e DATABASE_HOST=reportafrica-db.cng08osmae5x.eu-west-1.rds.amazonaws.com -e DATABASE_PORT=5432 -e DATABASE_NAME=reportafrica -e DATABASE_USER=reportafrica_admin -e DATABASE_PASSWORD=JesusisLord2026! -e DATABASE_SSL=true -e REDIS_HOST=reportafrica-redis.wt3d19.0001.euw1.cache.amazonaws.com -e REDIS_PORT=6379 -e AWS_REGION=eu-west-1 -e AWS_S3_BUCKET=reportafrica-media-prod -e JWT_SECRET=reportafrica-jwt-secret-prod-2026-secure-key -e JWT_EXPIRATION=7d reportafrica-api",
+    "sleep 10",
+    "curl -s http://localhost:3001/api/v1/health",
+    "echo '---LOGS---'",
+    "docker logs reportafrica-api --tail 15"
+  ]
+}

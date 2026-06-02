@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 
 interface RegisterDto {
@@ -9,6 +10,7 @@ interface RegisterDto {
   displayName: string;
   password: string;
   country: string;
+  phone?: string;
   latitude?: number;
   longitude?: number;
 }
@@ -108,5 +110,36 @@ export class AuthService {
       }
     } catch {}
     return null;
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    // Always return success to prevent email enumeration
+    if (!user) return { message: 'If that email exists, a reset link has been sent' };
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    await this.usersService.setPasswordResetToken(user.id, resetToken, resetExpires);
+
+    // TODO: Send email with reset link (integrate email service later)
+    // For now, log the token (remove in production with real email service)
+    console.log(`Password reset token for ${email}: ${resetToken}`);
+
+    return { message: 'If that email exists, a reset link has been sent' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.usersService.findByResetToken(token);
+    if (!user) throw new BadRequestException('Invalid or expired reset token');
+
+    if (user.passwordResetExpires < new Date()) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await this.usersService.updatePassword(user.id, hashedPassword);
+
+    return { message: 'Password reset successful. You can now login.' };
   }
 }

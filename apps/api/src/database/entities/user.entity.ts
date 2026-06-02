@@ -61,6 +61,15 @@ export class UserEntity {
   @Column({ nullable: true })
   state: string;
 
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ name: 'password_reset_token', nullable: true, select: false })
+  passwordResetToken: string;
+
+  @Column({ name: 'password_reset_expires', nullable: true, select: false })
+  passwordResetExpires: Date;
+
   @Column({ name: 'fcm_token', nullable: true })
   fcmToken: string;
 

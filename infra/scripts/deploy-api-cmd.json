@@ -1,0 +1,11 @@
+{
+  "commands": [
+    "cat > /home/ec2-user/.env.production << 'EOF'\nNODE_ENV=production\nPORT=3001\nDATABASE_HOST=reportafrica-db.cng08osmae5x.eu-west-1.rds.amazonaws.com\nDATABASE_PORT=5432\nDATABASE_NAME=reportafrica\nDATABASE_USER=reportafrica_admin\nDATABASE_PASSWORD=JesusisLord2026!\nREDIS_HOST=reportafrica-redis.wt3d19.0001.euw1.cache.amazonaws.com\nREDIS_PORT=6379\nAWS_REGION=eu-west-1\nAWS_S3_BUCKET=reportafrica-media-prod\nJWT_SECRET=reportafrica-jwt-secret-prod-2026-change-later\nJWT_EXPIRATION=7d\nEOF",
+    "chown ec2-user:ec2-user /home/ec2-user/.env.production",
+    "cd /home/ec2-user && git clone https://github.com/ReportAfricaLab/reportafricabackend.git reportafrica || (cd /home/ec2-user/reportafrica && git pull origin main)",
+    "cd /home/ec2-user/reportafrica && docker build -t reportafrica-api -f apps/api/Dockerfile . 2>&1",
+    "docker stop reportafrica-api 2>/dev/null || true",
+    "docker rm reportafrica-api 2>/dev/null || true",
+    "docker run -d --name reportafrica-api --restart always -p 3001:3001 --env-file /home/ec2-user/.env.production reportafrica-api"
+  ]
+}

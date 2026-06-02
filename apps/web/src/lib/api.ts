@@ -20,12 +20,16 @@ async function fetchAPI(endpoint: string, options: FetchOptions = {}) {
 
 export const api = {
   auth: {
-    register: (body: { email: string; username: string; displayName: string; password: string; country: string }) =>
+    register: (body: { email: string; username: string; displayName: string; password: string; country: string; phone?: string }) =>
       fetchAPI('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
     login: (body: { email: string; password: string }) =>
       fetchAPI('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
     oauth: (provider: string, token: string, country?: string) =>
       fetchAPI('/auth/oauth', { method: 'POST', body: JSON.stringify({ provider, token, country }) }),
+    forgotPassword: (email: string) =>
+      fetchAPI('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+    resetPassword: (token: string, newPassword: string) =>
+      fetchAPI('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
   },
   users: {
     me: (token: string) => fetchAPI('/users/me', { token }),

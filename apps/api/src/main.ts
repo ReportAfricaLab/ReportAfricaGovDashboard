@@ -26,7 +26,7 @@ async function bootstrap() {
   // CORS — strict in production, permissive in dev
   app.enableCors({
     origin: isProduction
-      ? ['https://reportafrica.com', /\.reportafrica\.com$/]
+      ? ['https://reportafrica.com', /\.reportafrica\.com$/, 'https://reportafrica-web.vercel.app', /\.vercel\.app$/, 'https://34-242-14-140.nip.io']
       : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004'],
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -1,0 +1,8 @@
+{
+  "commands": [
+    "yum install -y certbot python3-certbot-nginx",
+    "sed -i 's/server_name _;/server_name 34-242-14-140.nip.io;/' /etc/nginx/conf.d/api.conf",
+    "nginx -t && systemctl restart nginx",
+    "certbot --nginx -d 34-242-14-140.nip.io --non-interactive --agree-tos -m admin@reportafrica.com"
+  ]
+}

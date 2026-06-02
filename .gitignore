@@ -18,3 +18,9 @@ ios/
 infra/nginx/ssl/*.pem
 infra/nginx/ssl/*.key
 infra/nginx/ssl/*.crt
+
+# Terraform
+infra/terraform/*.tfvars
+infra/terraform/*.pem
+infra/terraform/.terraform/
+infra/terraform/*.tfstate*

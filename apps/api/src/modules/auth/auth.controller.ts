@@ -26,6 +26,10 @@ class RegisterDto {
   country: string;
 
   @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
   @IsNumber()
   latitude?: number;
 
@@ -54,6 +58,20 @@ class OAuthDto {
   country?: string;
 }
 
+class ForgotPasswordDto {
+  @IsEmail()
+  email: string;
+}
+
+class ResetPasswordDto {
+  @IsString()
+  token: string;
+
+  @IsString()
+  @MinLength(8)
+  newPassword: string;
+}
+
 @Controller('auth')
 @UseGuards(StrictThrottlerGuard)
 export class AuthController {
@@ -75,5 +93,17 @@ export class AuthController {
   @Throttle({ short: { ttl: 60000, limit: 10 } })
   oauth(@Body() dto: OAuthDto) {
     return this.authService.oauthLogin(dto.provider, dto.token, dto.country);
+  }
+
+  @Post('forgot-password')
+  @Throttle({ short: { ttl: 60000, limit: 3 } })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 }

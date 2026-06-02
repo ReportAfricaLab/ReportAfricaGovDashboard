@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import ReportCard from '@/components/ReportCard';
 
@@ -56,6 +58,7 @@ const CATEGORIES = [
 
 export default function FeedPage() {
   const { t } = useI18n();
+  const { isAuthenticated } = useAuth();
   const [country, setCountry] = useState('NG');
   const [category, setCategory] = useState('');
   const [reports, setReports] = useState<any[]>([]);
@@ -111,6 +114,11 @@ export default function FeedPage() {
         <div className="text-center py-20">
           <p className="text-gray-400 text-lg">{t('feed.empty', 'No reports yet')}</p>
           <p className="text-gray-300 text-sm mt-2">{t('report.create', 'Be the first to report what\'s happening in your area')}</p>
+          {isAuthenticated ? (
+            <Link href="/create-report" className="inline-block mt-4 px-6 py-3 bg-[#0F7B6C] text-white font-semibold rounded-lg hover:bg-[#0B6E4F] transition">Create Report</Link>
+          ) : (
+            <Link href="/register" className="inline-block mt-4 px-6 py-3 bg-[#0F7B6C] text-white font-semibold rounded-lg hover:bg-[#0B6E4F] transition">Sign up to report</Link>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

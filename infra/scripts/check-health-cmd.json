@@ -1,0 +1,8 @@
+{
+  "commands": [
+    "sleep 10",
+    "curl -s http://localhost:3001/api/v1/health",
+    "echo '---LOGS---'",
+    "docker logs reportafrica-api --tail 30"
+  ]
+}

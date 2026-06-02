@@ -31,10 +31,10 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const { t } = useI18n();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const brandName = user?.country ? COUNTRY_CONFIG[user.country]?.brandName || 'Africa' : 'Africa';
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -48,34 +48,49 @@ export default function Navbar() {
   const userProfile = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('ra_user') || '{}' : '{}');
   const trustInfo = TRUST_LABELS[userProfile.trustLevel || 'new_reporter'] || TRUST_LABELS.new_reporter;
 
+  const guestNavLinks = [
+    { href: '/feed', label: t('nav.feed', 'Feed') },
+    { href: '/donations', label: t('nav.donations', 'Helping Hands') },
+    { href: '/live', label: '🔴 ' + t('nav.live', 'Live') },
+  ];
+
+  const authNavLinks = [
+    { href: '/feed', label: t('nav.feed', 'Feed') },
+    { href: '/search', label: t('nav.search', 'Search') },
+    { href: '/donations', label: t('nav.donations', 'Helping Hands') },
+    { href: '/elections', label: t('nav.elections', 'Elections') },
+    { href: '/media-licensing', label: t('nav.media', 'Media') },
+    { href: '/map', label: t('nav.map', 'Map') },
+    { href: '/live', label: '🔴 ' + t('nav.live', 'Live') },
+  ];
+
+  const navLinks = isAuthenticated ? authNavLinks : guestNavLinks;
+
   return (
     <header className="fixed top-0 w-full bg-white/95 dark:bg-[#1E293B]/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="ReportAfrica" width={300} height={80} className="h-[80px] w-auto" priority />
+          <Image src="/logo.png" alt="ReportAfrica" width={300} height={80} className="h-[50px] sm:h-[80px] w-auto" priority />
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-[#0F7B6C]">{brandName}</span>
-            <span className="text-xs text-gray-500">Live Reports</span>
+            <span className="text-sm sm:text-lg font-bold text-[#0F7B6C]">{brandName}</span>
+            <span className="text-[10px] sm:text-xs text-gray-500">Live Reports</span>
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
-          <Link href="/feed" className="hover:text-[#0F7B6C] transition">{t('nav.feed', 'Feed')}</Link>
-          <Link href="/search" className="hover:text-[#0F7B6C] transition">{t('nav.search', 'Search')}</Link>
-          <Link href="/donations" className="hover:text-[#F97316] transition">{t('nav.donations', 'Helping Hands')}</Link>
-          <Link href="/elections" className="hover:text-[#0F7B6C] transition">{t('nav.elections', 'Elections')}</Link>
-          <Link href="/media-licensing" className="hover:text-[#0F7B6C] transition">{t('nav.media', 'Media')}</Link>
-          <Link href="/map" className="hover:text-[#0F7B6C] transition">{t('nav.map', 'Map')}</Link>
-          <Link href="/live" className="hover:text-[#D92D20] transition">🔴 {t('nav.live', 'Live')}</Link>
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-gray-600 dark:text-gray-300">
+          {navLinks.map((link) => (
+            <Link key={link.href} href={link.href} className="hover:text-[#0F7B6C] transition">{link.label}</Link>
+          ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isAuthenticated ? (
             <>
-              <Link href="/create-report" className="px-4 py-2 text-sm font-semibold text-white bg-[#D92D20] rounded-lg hover:bg-red-700 transition">
+              <Link href="/create-report" className="hidden sm:inline-flex px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#D92D20] rounded-lg hover:bg-red-700 transition">
                 + Report
               </Link>
-              <Link href="/emergency" className="px-3 py-2 text-sm font-semibold text-[#D92D20] border border-[#D92D20] rounded-lg hover:bg-red-50 transition">
+              <Link href="/emergency" className="hidden sm:inline-flex px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold text-[#D92D20] border border-[#D92D20] rounded-lg hover:bg-red-50 transition">
                 🚨 SOS
               </Link>
 
@@ -93,7 +108,6 @@ export default function Navbar() {
 
                 {showDropdown && (
                   <div className="absolute right-0 top-12 w-64 bg-white dark:bg-[#1E293B] rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-2 z-50">
-                    {/* User Info */}
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{user?.username || 'Reporter'}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">@{user?.username}</p>
@@ -102,8 +116,6 @@ export default function Navbar() {
                         <span className="text-[11px] font-medium" style={{ color: trustInfo.color }}>{trustInfo.label}</span>
                       </div>
                     </div>
-
-                    {/* Links */}
                     <div className="py-1">
                       {[
                         { href: '/profile', icon: '👤', label: 'My Profile' },
@@ -123,13 +135,21 @@ export default function Navbar() {
                         </Link>
                       ))}
                     </div>
-
-                    {/* Sign Out */}
+                    {/* Mobile-only links */}
+                    <div className="lg:hidden border-t border-gray-100 dark:border-gray-700 py-1">
+                      <Link href="/create-report" onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D92D20] font-medium hover:bg-red-50 transition">
+                        <span>📝</span><span>Create Report</span>
+                      </Link>
+                      <Link href="/emergency" onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D92D20] font-medium hover:bg-red-50 transition">
+                        <span>🚨</span><span>Emergency SOS</span>
+                      </Link>
+                    </div>
                     <div className="border-t border-gray-100 dark:border-gray-700 pt-1">
                       <button onClick={() => { logout(); setShowDropdown(false); }}
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition w-full text-left">
-                        <span>🚪</span>
-                        <span>Sign Out</span>
+                        <span>🚪</span><span>Sign Out</span>
                       </button>
                     </div>
                   </div>
@@ -138,16 +158,43 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="px-4 py-2 text-sm font-medium text-[#0F7B6C] border border-[#0F7B6C] rounded-lg hover:bg-[#0F7B6C]/5">
+              <Link href="/login" className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-[#0F7B6C] border border-[#0F7B6C] rounded-lg hover:bg-[#0F7B6C]/5">
                 Log In
               </Link>
-              <Link href="/register" className="px-4 py-2 text-sm font-medium text-white bg-[#0F7B6C] rounded-lg hover:bg-[#0B6E4F]">
+              <Link href="/register" className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-[#0F7B6C] rounded-lg hover:bg-[#0B6E4F]">
                 Sign Up
               </Link>
             </>
           )}
+
+          {/* Mobile Hamburger */}
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-gray-600 hover:text-[#0F7B6C]">
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E293B]">
+          <nav className="flex flex-col px-4 py-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)}
+                className="py-3 px-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition">
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

@@ -1,0 +1,12 @@
+# Copy this file:
+#   cp terraform.tfvars.example terraform.tfvars
+# Then fill in your values
+
+aws_region   = "eu-west-1"
+project      = "reportafrica"
+environment  = "prod"
+db_name      = "reportafrica"
+db_username  = "reportafrica_admin"
+db_password  = "CHANGE_ME_TO_STRONG_PASSWORD"
+domain_name  = "reportafrica.com"
+ec2_key_name = "your-key-pair-name"
