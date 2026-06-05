@@ -1,0 +1,5 @@
+{
+  "commands": [
+    "docker logs reportafrica-api 2>&1 | grep -i 'translat\\|voice\\|warn' | tail -10"
+  ]
+}

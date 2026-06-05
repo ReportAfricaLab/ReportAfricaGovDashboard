@@ -2,6 +2,7 @@ import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IsString, IsOptional } from 'class-validator';
 import { VoiceService } from './voice.service';
+import { AiService } from '../ai/ai.service';
 
 class TranscribeDto {
   @IsString() audioUrl: string;
@@ -15,7 +16,10 @@ class TranslateDto {
 
 @Controller('voice')
 export class VoiceController {
-  constructor(private readonly service: VoiceService) {}
+  constructor(
+    private readonly service: VoiceService,
+    private readonly ai: AiService,
+  ) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Post('transcribe')
@@ -25,7 +29,16 @@ export class VoiceController {
 
   @Post('translate')
   async translate(@Body() dto: TranslateDto) {
-    const translated = await this.service.translateToEnglish(dto.text, dto.targetLanguage || 'auto');
-    return { originalText: dto.text, translatedText: translated };
+    const targetLang = dto.targetLanguage || 'en';
+
+    const response = await this.ai.chat(
+      'You are a translator. Translate the following text to English. Return ONLY the translated text, nothing else. No quotes, no explanation.',
+      dto.text,
+    );
+
+    return {
+      originalText: dto.text,
+      translatedText: response || dto.text,
+    };
   }
 }
