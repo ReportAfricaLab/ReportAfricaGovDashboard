@@ -62,33 +62,11 @@ export default function RegisterPage() {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!googleClientId) { setError('Google OAuth not configured'); setLoading(false); return; }
 
-    const width = 500, height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    const redirectUri = window.location.origin + '/api/auth/callback/google';
+    const redirectUri = window.location.origin + '/auth/callback/google';
     const scope = 'openid email profile';
     const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token+id_token&scope=${encodeURIComponent(scope)}&nonce=${Date.now()}`;
 
-    const popup = window.open(url, 'google-signup', `width=${width},height=${height},left=${left},top=${top}`);
-
-    const interval = setInterval(() => {
-      try {
-        if (!popup || popup.closed) { clearInterval(interval); setLoading(false); return; }
-        if (popup.location.href.includes(window.location.origin)) {
-          const hash = popup.location.hash;
-          popup.close();
-          clearInterval(interval);
-          const params = new URLSearchParams(hash.substring(1));
-          const idToken = params.get('id_token');
-          if (idToken) {
-            handleGoogleToken(idToken);
-          } else {
-            setError('No token received from Google');
-            setLoading(false);
-          }
-        }
-      } catch { /* cross-origin */ }
-    }, 500);
+    window.location.href = url;
   };
 
   const handleGoogleToken = async (idToken: string) => {

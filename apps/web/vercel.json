@@ -1,0 +1,10 @@
+{
+  "headers": [
+    {
+      "source": "/api/auth/callback/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "unsafe-none" }
+      ]
+    }
+  ]
+}
