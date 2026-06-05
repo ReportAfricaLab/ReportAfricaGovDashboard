@@ -32,7 +32,6 @@ export default function CreateReportPage() {
   const [transcribing, setTranscribing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) router.push('/login');
@@ -72,53 +71,38 @@ export default function CreateReportPage() {
 
   const update = (field: string, value: any) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleVoiceRecord = async () => {
+  const handleVoiceRecord = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) { setError('Voice input not supported on this browser'); return; }
+
     if (recording) {
-      // Stop recording
-      mediaRecorderRef.current?.stop();
       setRecording(false);
       return;
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      const chunks: Blob[] = [];
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setTranscribing(true);
-        try {
-          const blob = new Blob(chunks, { type: 'audio/webm' });
-          // Upload audio to S3
-          const { uploadUrl, fileUrl } = await api.upload.getPresignedUrl(token!, 'audio', 'audio/webm');
-          await fetch(uploadUrl, { method: 'PUT', body: blob, headers: { 'Content-Type': 'audio/webm' } });
-          // Transcribe - pass the S3 URI
-          const s3Key = fileUrl.split('.com/')[1] || fileUrl;
-          const s3Uri = `s3://reportafrica-media-prod/${s3Key}`;
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-          const res = await fetch(`${API_URL}/voice/transcribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ audioUrl: s3Uri }),
-          });
-          const data = await res.json();
-          if (data.originalText) {
-            update('description', form.description + (form.description ? '\n' : '') + data.originalText);
-          } else {
-            setError('Could not transcribe audio. Try again or type manually.');
-          }
-        } catch { setError('Voice transcription failed'); }
-        setTranscribing(false);
-      };
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      if (event.results[event.results.length - 1].isFinal) {
+        update('description', form.description + (form.description ? ' ' : '') + transcript);
+      }
+    };
 
-      mediaRecorder.start();
-      setRecording(true);
-    } catch {
-      setError('Microphone access denied');
-    }
+    recognition.onerror = () => { setRecording(false); setError('Voice recognition failed. Try again.'); };
+    recognition.onend = () => { setRecording(false); };
+
+    recognition.start();
+    setRecording(true);
+
+    // Auto-stop after 60 seconds
+    setTimeout(() => { try { recognition.stop(); } catch {} }, 60000);
   };
 
   const handleMediaAdd = (files: FileList | null) => {
@@ -216,9 +200,9 @@ export default function CreateReportPage() {
           <textarea value={form.description} onChange={(e) => update('description', e.target.value)} required maxLength={5000} rows={5}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0F7B6C] focus:border-transparent outline-none resize-none"
             placeholder="Describe what is happening in detail..." />
-          <button type="button" onClick={handleVoiceRecord} disabled={transcribing}
-            className={`mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${recording ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'} disabled:opacity-50`}>
-            {transcribing ? '⏳ Transcribing...' : recording ? '⏹️ Stop Recording' : '🎤 Voice to Text'}
+          <button type="button" onClick={handleVoiceRecord}
+            className={`mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${recording ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}>
+            {recording ? '⏹️ Stop Listening' : '🎤 Voice to Text'}
           </button>
         </div>
 
