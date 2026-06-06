@@ -55,7 +55,7 @@ export default function ProfilePage() {
       });
       const updated = await res.json();
       setProfile(updated);
-      if (user) login({ ...user, username: updated.username }, token);
+      if (user) login({ ...user, username: updated.username }, token!, localStorage.getItem('ra_refresh') || '');
       setEditing(false);
     } catch {}
     setSaving(false);
