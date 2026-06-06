@@ -23,7 +23,8 @@ export default function EarningsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">💰 My Earnings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">💰 My Earnings</h1>
+      <p className="text-sm text-gray-500 mb-6">All earnings are paid directly to your bank account via KoraPay. No funds are held on the platform.</p>
 
       {stats?.earnings?.length > 0 && (
         <div className="grid grid-cols-2 gap-4 mb-8">
@@ -37,7 +38,7 @@ export default function EarningsPage() {
       )}
 
       {earnings.length === 0 ? (
-        <p className="text-center text-gray-400 py-12">No earnings yet. Tip income and media license fees will appear here.</p>
+        <p className="text-center text-gray-400 py-12">No earnings yet. Tips and media license payments are sent directly to your bank account.</p>
       ) : (
         <div className="space-y-3">
           {earnings.map((item: any) => (

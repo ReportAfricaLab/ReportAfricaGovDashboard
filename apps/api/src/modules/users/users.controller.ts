@@ -1,10 +1,14 @@
 import { Controller, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
+import { TipsService } from '../tips/tips.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly tipsService: TipsService,
+  ) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
@@ -14,8 +18,15 @@ export class UsersController {
 
   @UseGuards(AuthGuard('jwt'))
   @Patch('me')
-  updateProfile(@Request() req: any, @Body() body: any) {
+  async updateProfile(@Request() req: any, @Body() body: any) {
     const { password, email, role, trustLevel, trustScore, ...safeData } = body;
-    return this.usersService.updateProfile(req.user.id, safeData);
+    const updated = await this.usersService.updateProfile(req.user.id, safeData);
+
+    // If bank details were just added, auto-pay pending tips
+    if (safeData.bankAccountNumber && safeData.bankCode) {
+      this.tipsService.payPendingTips(req.user.id).catch(() => {});
+    }
+
+    return updated;
   }
 }

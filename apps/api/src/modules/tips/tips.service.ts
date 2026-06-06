@@ -288,4 +288,63 @@ export class TipsService {
       await this.verifyPackPurchase(data.reference, data.metadata.userId);
     }
   }
+
+  // === AUTO-PAY PENDING TIPS (called when reporter adds bank details) ===
+
+  async payPendingTips(reporterId: string) {
+    const reporter = await this.userRepo.findOne({ where: { id: reporterId } });
+    if (!reporter?.bankAccountNumber || !reporter?.bankCode) return;
+
+    const pendingTips = await this.tipRepo.find({ where: { reporterId, status: 'pending_bank' } });
+    if (pendingTips.length === 0) return;
+
+    for (const tip of pendingTips) {
+      const reporterAmount = Math.round(Number(tip.amount) * (1 - PLATFORM_CUT));
+      const reporterCurrency = getCurrencyForCountry(reporter.country);
+      const tipCurrency = tip.currency || 'NGN';
+      const isCrossCurrency = tipCurrency !== reporterCurrency;
+
+      let payoutAmount = reporterAmount;
+      let payoutCurrency = tipCurrency;
+
+      if (isCrossCurrency && this.currencyService.isSupported(tipCurrency, reporterCurrency)) {
+        const conversion = await this.currencyService.convert(reporterAmount, tipCurrency, reporterCurrency);
+        payoutAmount = conversion.convertedAmount;
+        payoutCurrency = reporterCurrency;
+      }
+
+      try {
+        await this.koraPayService.initializeSplitPayment({
+          amount: payoutAmount,
+          currency: payoutCurrency,
+          customerEmail: reporter.email,
+          customerName: reporter.displayName,
+          reference: this.koraPayService.generateReference(),
+          reporterBankAccount: {
+            bankCode: reporter.bankCode,
+            accountNumber: reporter.bankAccountNumber,
+            accountName: reporter.bankAccountName,
+          },
+          platformSplitPercent: 0,
+          metadata: { tipId: tip.id, reporterId: reporter.id },
+        });
+
+        // Mark tip as paid
+        await this.tipRepo.update(tip.id, { status: 'success' });
+
+        // Record earnings
+        await this.earningsService.recordEarning({
+          reporterId,
+          amount: payoutAmount,
+          currency: payoutCurrency,
+          source: 'tip',
+          sourceId: tip.id,
+          description: 'Pending tip paid out after adding bank details',
+          paymentReference: tip.paymentReference,
+        });
+      } catch {
+        // Individual tip payout failed — skip, will retry later
+      }
+    }
+  }
 }
