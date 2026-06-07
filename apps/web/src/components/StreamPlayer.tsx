@@ -37,7 +37,7 @@ export default function StreamPlayer({ wsUrl, token, playbackUrl, title }: Strea
     room.on(RoomEvent.Connected, () => setConnected(true));
     room.on(RoomEvent.Disconnected, () => setConnected(false));
 
-    room.connect(wsUrl, token).catch((err) => {
+    room.connect(wsUrl, token).catch((err: any) => {
       setError('Failed to connect to stream');
       console.error('LiveKit connect error:', err);
     });

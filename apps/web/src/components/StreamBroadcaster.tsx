@@ -68,7 +68,7 @@ export default function StreamBroadcaster({ config, onStatusChange, autoPreview 
 
       // Attach local video to preview
       const videoTrack = room.localParticipant.getTrackPublications().find(
-        p => p.track?.kind === Track.Kind.Video
+        (p: any) => p.track?.kind === Track.Kind.Video
       );
       if (videoTrack?.track && videoRef.current) {
         videoTrack.track.attach(videoRef.current);

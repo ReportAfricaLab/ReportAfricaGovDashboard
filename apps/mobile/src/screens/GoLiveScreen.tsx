@@ -69,7 +69,7 @@ function WatchTab({ country, token, user }: { country: string; token: string | n
   };
 
   if (selected) {
-    return <StreamViewer stream={selected} token={token} user={user} onBack={() => setSelected(null)} />;
+    return <StreamViewer stream={selected} token={token} user={user} onBack={() => setSelected(null)} country={country} />;
   }
 
   return (
@@ -93,14 +93,26 @@ function WatchTab({ country, token, user }: { country: string; token: string | n
 }
 
 // === STREAM VIEWER WITH CHAT ===
-function StreamViewer({ stream, token, user, onBack }: { stream: Stream; token: string | null; user: any; onBack: () => void }) {
+function StreamViewer({ stream, token, user, onBack, country }: { stream: Stream; token: string | null; user: any; onBack: () => void; country: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatText, setChatText] = useState('');
   const [viewers, setViewers] = useState(stream.viewerCount || 0);
+  const [viewerToken, setViewerToken] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+    // Get viewer token
+    if (token) {
+      livestreamAPI.getById(stream.id).then(() => {
+        // Fetch viewer token from API
+        const API_URL = __DEV__ ? 'http://10.162.41.17:3001/api/v1' : 'https://34-242-14-140.nip.io/api/v1';
+        fetch(`${API_URL}/livestream/${stream.id}/viewer-token`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.json())
+          .then(data => setViewerToken(data.token))
+          .catch(() => {});
+      }).catch(() => {});
+    }
     // Load chat history
     livestreamAPI.getChatHistory(stream.id).then(res => {
       if (Array.isArray(res.data)) setMessages(res.data);
@@ -143,10 +155,21 @@ function StreamViewer({ stream, token, user, onBack }: { stream: Stream; token: 
         </View>
       </View>
 
-      {/* Video placeholder */}
-      <View style={styles.videoPlaceholder}>
-        <Text style={styles.videoText}>📺 {stream.title}</Text>
-        <Text style={styles.videoSub}>{stream.playbackUrl ? 'Stream playing...' : 'Connecting...'}</Text>
+      {/* LiveKit WebView Viewer */}
+      <View style={{ height: 220, backgroundColor: '#1a1a1a', borderRadius: 12, overflow: 'hidden' }}>
+        {viewerToken ? (
+          <WebView
+            source={{ uri: `https://reportafrica-web.vercel.app/livekit-mobile?mode=viewer&token=${encodeURIComponent(viewerToken)}&wsUrl=${encodeURIComponent('wss://reportafrica-project-0ankto27.livekit.cloud')}` }}
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+            style={{ flex: 1 }}
+          />
+        ) : (
+          <View style={styles.videoPlaceholder}>
+            <Text style={styles.videoText}>📺 {stream.title}</Text>
+            <Text style={styles.videoSub}>Connecting...</Text>
+          </View>
+        )}
       </View>
 
       {/* Chat */}
@@ -237,14 +260,21 @@ function GoLiveTab({ token, user }: { token: string | null; user: any }) {
     setChatText('');
   };
 
-  // Live state with chat
+  // Live state with WebView video + chat
   if (isLive && stream) {
+    const broadcastUrl = `https://reportafrica-web.vercel.app/livekit-mobile?mode=broadcaster&token=${encodeURIComponent(stream.streamKeyValue)}&wsUrl=${encodeURIComponent(stream.ingestEndpoint)}`;
     return (
       <KeyboardAvoidingView style={styles.liveContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.liveHeader}>
           <View style={styles.liveBadge}><Text style={styles.liveBadgeText}>● LIVE</Text></View>
           <Text style={styles.viewerCount}>{viewers} watching</Text>
         </View>
+
+        {/* LiveKit WebView Broadcaster */}
+        <View style={{ height: 250, borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
+          <WebView source={{ uri: broadcastUrl }} allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} style={{ flex: 1 }} />
+        </View>
+
         <Text style={styles.liveTitle}>{stream.title}</Text>
 
         {/* Live chat */}
@@ -277,14 +307,9 @@ function GoLiveTab({ token, user }: { token: string | null; user: any }) {
       <ScrollView contentContainerStyle={styles.padded}>
         <Text style={styles.heading}>Stream Ready</Text>
         <Text style={styles.subheading}>{stream.title}</Text>
-        <View style={styles.infoBox}>
-          <Text style={styles.infoLabel}>Ingest Endpoint:</Text>
-          <Text style={styles.infoValue} numberOfLines={2}>{stream.ingestEndpoint}</Text>
-        </View>
         <TouchableOpacity style={styles.goLiveBtn} onPress={goLive}>
           <Text style={styles.goLiveBtnText}>🔴 GO LIVE</Text>
         </TouchableOpacity>
-        <Text style={styles.hint}>Use a streaming app (e.g. Larix) with the ingest endpoint, or tap GO LIVE to mark active.</Text>
       </ScrollView>
     );
   }

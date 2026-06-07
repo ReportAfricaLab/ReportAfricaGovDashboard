@@ -265,7 +265,7 @@ function ElectionLiveTab({ streams }: { streams: any[] }) {
       <div className="space-y-4">
         <button onClick={() => setWatching(null)} className="text-sm text-[#0F7B6C] font-medium hover:underline">← Back to streams</button>
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <StreamPlayer playbackUrl={watching.playbackUrl} title={watching.title} onError={() => {}} />
+          <StreamPlayer playbackUrl={watching.playbackUrl} title={watching.title} />
           <div className="p-4">
             <div className="flex items-center gap-3 mb-2">
               <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded bg-red-600 text-white">
