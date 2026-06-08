@@ -44,7 +44,7 @@ export default function ElectionsScreen() {
   };
 
   const renderFeedItem = ({ item }: { item: any }) => (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('ReportDetail', { id: item.id })}>
       <View style={styles.cardRow}>
         <View style={[styles.typeBadge, { backgroundColor: INCIDENT_COLORS[item.type] || '#6B7280' }]}>
           <Text style={styles.typeBadgeText}>{item.type?.replace('_', ' ').toUpperCase()}</Text>
@@ -66,7 +66,7 @@ export default function ElectionsScreen() {
         {item.user?.displayName || 'Anonymous'} · {new Date(item.createdAt).toLocaleString()}
         {item.isVerifiedObserver ? ' ✓ Observer' : ''}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderHotspot = ({ item }: { item: any }) => (
