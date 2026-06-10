@@ -231,53 +231,36 @@ export default function LivePage() {
                     className="mt-3 text-xs text-[#0F7B6C] font-medium hover:underline">← Back to streams</button>
                 </div>
               </div>
-            ) : status === 'live' && broadcastConfig ? (
-              <div>
-                <StreamBroadcaster config={broadcastConfig} autoPreview={true} />
-                <div className="p-4">
+            ) : (
+            <div>
+              <StreamBroadcaster config={broadcastConfig || undefined} autoPreview={true} />
+              <div className="p-4 space-y-3">
+                {status === 'preview' && (
+                  <>
+                    <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      placeholder="What's happening? (e.g. Protest at Lekki Toll Gate)"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D92D20] outline-none" />
+                    <div className="flex gap-2">
+                      <button onClick={goLive} disabled={loading}
+                        className="flex-1 py-3 bg-[#D92D20] text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50">
+                        {loading ? 'Starting...' : '🔴 Go Live Now'}
+                      </button>
+                      <button onClick={reset} className="px-4 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
+                    </div>
+                  </>
+                )}
+                {status === 'live' && (
                   <button onClick={endStream} className="w-full py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-700 transition">
                     ⏹ End Stream
                   </button>
-                </div>
-              </div>
-            ) : (
-            <div>
-            <div className="relative bg-black aspect-video">
-              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-              {status === 'live' && (
-                <div className="absolute top-4 left-4 flex items-center gap-3">
-                  <span className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">🔴 LIVE</span>
-                  <span className="px-2 py-1 bg-black/60 text-white text-xs rounded-full">👁 {viewerCount}</span>
-                </div>
-              )}
-            </div>
-            <div className="p-4 space-y-3">
-              {status === 'preview' && (
-                <>
-                  <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    placeholder="What's happening? (e.g. Protest at Lekki Toll Gate)"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D92D20] outline-none" />
-                  <div className="flex gap-2">
-                    <button onClick={goLive} disabled={loading}
-                      className="flex-1 py-3 bg-[#D92D20] text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50">
-                      {loading ? 'Starting...' : '🔴 Go Live Now'}
-                    </button>
-                    <button onClick={reset} className="px-4 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
+                )}
+                {status === 'ended' && (
+                  <div className="text-center py-4">
+                    <p className="text-gray-700 font-medium mb-3">Stream ended</p>
+                    <button onClick={reset} className="px-6 py-2 bg-[#0F7B6C] text-white rounded-lg hover:bg-[#0B6E4F]">Start New Stream</button>
                   </div>
-                </>
-              )}
-              {status === 'live' && (
-                <button onClick={endStream} className="w-full py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-700 transition">
-                  ⏹ End Stream
-                </button>
-              )}
-              {status === 'ended' && (
-                <div className="text-center py-4">
-                  <p className="text-gray-700 font-medium mb-3">Stream ended</p>
-                  <button onClick={reset} className="px-6 py-2 bg-[#0F7B6C] text-white rounded-lg hover:bg-[#0B6E4F]">Start New Stream</button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             </div>
             )}
           </div>

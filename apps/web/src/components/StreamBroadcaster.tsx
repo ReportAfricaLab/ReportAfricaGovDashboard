@@ -41,7 +41,12 @@ export default function StreamBroadcaster({ config, onStatusChange, autoPreview 
 
   useEffect(() => {
     if (autoPreview) startPreview();
-    return () => stopAll();
+    return () => {
+      // Only cleanup preview stream, NOT the LiveKit room
+      if (videoRef.current?.srcObject && !roomRef.current) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+      }
+    };
   }, []);
 
   const startBroadcast = async () => {
