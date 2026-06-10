@@ -43,7 +43,7 @@ export class LivestreamService {
     }
 
     // Generate broadcaster token
-    const broadcasterToken = this.generateToken(roomName, userId, true);
+    const broadcasterToken = await this.generateToken(roomName, userId, true);
 
     const stream = this.streamRepo.create({
       userId,
@@ -95,7 +95,7 @@ export class LivestreamService {
     const stream = await this.streamRepo.findOne({ where: { id: streamId } });
     if (!stream) throw new NotFoundException('Stream not found');
 
-    const token = this.generateToken(stream.channelArn, viewerId, false, viewerName);
+    const token = await this.generateToken(stream.channelArn, viewerId, false, viewerName);
     return { token, wsUrl: this.livekitHost, roomName: stream.channelArn };
   }
 
@@ -144,7 +144,7 @@ export class LivestreamService {
     return qb.orderBy('s.startedAt', 'DESC').getMany();
   }
 
-  private generateToken(roomName: string, identity: string, isPublisher: boolean, name?: string): string {
+  private async generateToken(roomName: string, identity: string, isPublisher: boolean, name?: string): Promise<string> {
     if (!this.livekitApiKey || !this.livekitApiSecret) {
       return 'mock_token_' + Date.now();
     }
@@ -162,6 +162,6 @@ export class LivestreamService {
       canPublishData: true,
     });
 
-    return token.toJwt();
+    return await token.toJwt();
   }
 }

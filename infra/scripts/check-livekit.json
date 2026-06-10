@@ -1,0 +1,5 @@
+{
+  "commands": [
+    "docker exec reportafrica-api node -e \"try { require('livekit-server-sdk'); console.log('LIVEKIT: INSTALLED'); } catch(e) { console.log('LIVEKIT: NOT INSTALLED - ' + e.message); }\""
+  ]
+}

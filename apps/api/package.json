@@ -8,7 +8,7 @@
     "start": "node dist/main",
     "start:prod": "node dist/main",
     "migration:generate": "npx typeorm migration:generate -d dist/data-source.js",
-"migration:run": "npx typeorm migration:run -d dist/data-source.js",
+    "migration:run": "npx typeorm migration:run -d dist/data-source.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
   },
   "dependencies": {
@@ -35,12 +35,12 @@
     "bull": "^4.12.0",
     "cache-manager": "^7.2.8",
     "cache-manager-redis-yet": "^5.1.5",
-    "cookie-parser": "^1.4.6",
-    "livekit-server-sdk": "^2.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cookie-parser": "^1.4.6",
     "helmet": "^8.2.0",
     "ioredis": "^5.3.2",
+    "livekit-server-sdk": "^2.15.4",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
