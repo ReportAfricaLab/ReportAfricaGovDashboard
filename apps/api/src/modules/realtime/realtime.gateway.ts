@@ -78,8 +78,20 @@ export class RealtimeGateway implements OnGatewayConnection {
 
   @SubscribeMessage('chat:send')
   async handleChat(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string; text: string; userId: string; username: string }) {
-    // Only authenticated users can send chat
-    const authUser = this.authenticatedUsers.get(client.id);
+    // Try to authenticate from stored map, or re-verify from handshake
+    let authUser = this.authenticatedUsers.get(client.id);
+    if (!authUser) {
+      // Try re-auth from handshake token
+      const handshakeToken = client.handshake.auth?.token || client.handshake.query?.token;
+      if (handshakeToken) {
+        try {
+          const payload = this.jwtService.verify(handshakeToken as string);
+          authUser = { userId: payload.sub, username: payload.email };
+          this.authenticatedUsers.set(client.id, authUser);
+        } catch {}
+      }
+    }
+
     if (!authUser) {
       client.emit('error', { message: 'Authentication required to send messages' });
       return;
