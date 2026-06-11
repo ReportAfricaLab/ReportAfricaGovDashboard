@@ -72,6 +72,9 @@ export class LivestreamEntity {
   @Column({ name: 'recording_url', nullable: true })
   recordingUrl: string;
 
+  @Column({ name: 'thumbnail_url', nullable: true })
+  thumbnailUrl: string;
+
   @Column({ name: 'election_id', nullable: true })
   @Index()
   electionId: string;

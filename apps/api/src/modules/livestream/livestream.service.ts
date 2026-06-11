@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LivestreamEntity } from '../../database/entities';
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient, EgressClient } from 'livekit-server-sdk';
 
 @Injectable()
 export class LivestreamService {
@@ -12,6 +12,11 @@ export class LivestreamService {
   private readonly livekitApiKey: string;
   private readonly livekitApiSecret: string;
   private readonly roomService: RoomServiceClient | null;
+  private readonly egressClient: EgressClient | null;
+  private readonly s3Bucket: string;
+  private readonly s3Region: string;
+  private readonly s3AccessKey: string;
+  private readonly s3SecretKey: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -21,15 +26,21 @@ export class LivestreamService {
     this.livekitHost = this.config.get('LIVEKIT_HOST', 'wss://reportafrica-project-0ankto27.livekit.cloud');
     this.livekitApiKey = this.config.get('LIVEKIT_API_KEY', '');
     this.livekitApiSecret = this.config.get('LIVEKIT_API_SECRET', '');
+    this.s3Bucket = this.config.get('AWS_S3_BUCKET', 'reportafrica-media-prod');
+    this.s3Region = this.config.get('AWS_REGION', 'eu-west-1');
+    this.s3AccessKey = this.config.get('AWS_ACCESS_KEY_ID', '');
+    this.s3SecretKey = this.config.get('AWS_SECRET_ACCESS_KEY', '');
 
     if (this.livekitApiKey && this.livekitApiSecret) {
       this.roomService = new RoomServiceClient(this.livekitHost, this.livekitApiKey, this.livekitApiSecret);
+      this.egressClient = new EgressClient(this.livekitHost, this.livekitApiKey, this.livekitApiSecret);
     } else {
       this.roomService = null;
+      this.egressClient = null;
     }
   }
 
-  async createStream(userId: string, country: string, dto: { title: string; description?: string; category?: string; latitude?: number; longitude?: number; electionName?: string; electionState?: string; electionPollingUnit?: string }) {
+  async createStream(userId: string, country: string, dto: { title: string; description?: string; category?: string; latitude?: number; longitude?: number; thumbnailUrl?: string; electionName?: string; electionState?: string; electionPollingUnit?: string }) {
     const roomName = `stream_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const isElection = !!dto.electionName;
 
@@ -53,10 +64,11 @@ export class LivestreamService {
       category: isElection ? 'election' : (dto.category || 'general'),
       latitude: dto.latitude,
       longitude: dto.longitude,
-      channelArn: roomName, // Store room name here
-      streamKeyValue: broadcasterToken, // Store broadcaster token
-      ingestEndpoint: this.livekitHost, // LiveKit WebSocket URL
-      playbackUrl: roomName, // Viewers use room name to join
+      channelArn: roomName,
+      streamKeyValue: broadcasterToken,
+      ingestEndpoint: this.livekitHost,
+      playbackUrl: roomName,
+      thumbnailUrl: dto.thumbnailUrl || undefined,
       status: 'ready',
       electionName: dto.electionName,
       electionState: dto.electionState,
@@ -72,6 +84,28 @@ export class LivestreamService {
 
     stream.status = 'live';
     stream.startedAt = new Date();
+
+    // Start recording (Egress) to S3
+    if (this.egressClient && this.s3AccessKey) {
+      try {
+        const recordingKey = `recordings/${stream.id}/${Date.now()}.mp4`;
+        const output = {
+          file: {
+            filepath: recordingKey,
+            output: {
+              case: 's3' as const,
+              value: { accessKey: this.s3AccessKey, secret: this.s3SecretKey, bucket: this.s3Bucket, region: this.s3Region },
+            },
+          },
+        };
+        const egress = await this.egressClient.startRoomCompositeEgress(stream.channelArn, output as any);
+        stream.recordingUrl = egress.egressId;
+        this.logger.log(`Recording started for stream ${streamId}: ${egress.egressId}`);
+      } catch (err) {
+        this.logger.error('Failed to start recording', err);
+      }
+    }
+
     return this.streamRepo.save(stream);
   }
 
@@ -81,6 +115,22 @@ export class LivestreamService {
 
     stream.status = 'ended';
     stream.endedAt = new Date();
+
+    // Stop recording and get the file URL
+    if (this.egressClient && stream.recordingUrl && !stream.recordingUrl.startsWith('http')) {
+      try {
+        await this.egressClient.stopEgress(stream.recordingUrl); // recordingUrl holds egressId
+        // Build the S3 URL for the recording
+        const recordingKey = `recordings/${stream.id}`;
+        stream.recordingUrl = `https://${this.s3Bucket}.s3.${this.s3Region}.amazonaws.com/${recordingKey}`;
+        // Thumbnail = first frame (same path with .jpg)
+        stream.thumbnailUrl = `https://${this.s3Bucket}.s3.${this.s3Region}.amazonaws.com/${recordingKey}/thumbnail.jpg`;
+        this.logger.log(`Recording stopped for stream ${streamId}`);
+      } catch (err) {
+        this.logger.error('Failed to stop recording', err);
+        stream.recordingUrl = '' as any;
+      }
+    }
 
     // Delete LiveKit room
     if (this.roomService) {

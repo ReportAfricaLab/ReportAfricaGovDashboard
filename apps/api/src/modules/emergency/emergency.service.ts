@@ -58,7 +58,7 @@ export class EmergencyService {
     });
 
     // 4. Auto-start emergency broadcast if requested
-    let stream = null;
+    let stream: any = null;
     if (payload.broadcast) {
       try {
         stream = await this.livestreamService.createStream(userId, country, {

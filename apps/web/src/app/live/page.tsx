@@ -365,9 +365,13 @@ export default function LivePage() {
               {recordings.map((r: any) => (
                 <div key={r.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition">
                   <div className="relative bg-gray-800 aspect-video flex items-center justify-center">
-                    <span className="text-white text-3xl">▶️</span>
+                    {r.thumbnailUrl ? (
+                      <img src={r.thumbnailUrl} alt={r.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white text-3xl">▶️</span>
+                    )}
                     {r.recordingUrl && (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-full">Replay</div>
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-full">▶ Replay</div>
                     )}
                   </div>
                   <div className="p-4">
@@ -376,6 +380,9 @@ export default function LivePage() {
                       by {r.user?.displayName || 'Anonymous'} · {r.endedAt ? new Date(r.endedAt).toLocaleDateString() : ''}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">👁 {r.peakViewers || 0} peak viewers</p>
+                    {r.recordingUrl && r.recordingUrl.startsWith('http') && (
+                      <video src={r.recordingUrl} controls className="w-full mt-3 rounded-lg" />
+                    )}
                   </div>
                 </div>
               ))}
