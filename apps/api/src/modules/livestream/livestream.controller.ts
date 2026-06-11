@@ -14,6 +14,7 @@ class CreateStreamDto {
   @IsNumber() @IsOptional() longitude?: number;
   @IsString() @IsOptional() electionName?: string;
   @IsString() @IsOptional() electionState?: string;
+  @IsString() @IsOptional() thumbnailUrl?: string;
   @IsString() @IsOptional() electionPollingUnit?: string;
 }
 
