@@ -31,7 +31,7 @@ export default function LivePage() {
   const [tab, setTab] = useState<Tab>('watching');
   const [status, setStatus] = useState<StreamStatus>('idle');
   const [streamId, setStreamId] = useState('');
-  const [form, setForm] = useState({ title: '', description: '', category: 'general' });
+  const [form, setForm] = useState({ title: '', description: '', category: 'general', thumbnailUrl: '' });
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [liveStreams, setLiveStreams] = useState<any[]>([]);
   const [recordings, setRecordings] = useState<any[]>([]);
@@ -259,6 +259,19 @@ export default function LivePage() {
                     <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
                       placeholder="What's happening? (e.g. Protest at Lekki Toll Gate)"
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D92D20] outline-none" />
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Thumbnail (optional)</label>
+                      <input type="file" accept="image/*" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !token) return;
+                        try {
+                          const { uploadUrl, fileUrl } = await api.upload.getPresignedUrl(token, 'image', file.type);
+                          await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+                          setForm({ ...form, thumbnailUrl: fileUrl });
+                        } catch {}
+                      }} className="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200" />
+                      {form.thumbnailUrl && <p className="text-[10px] text-green-600 mt-1">✓ Thumbnail uploaded</p>}
+                    </div>
                     <div className="flex gap-2">
                       <button onClick={goLive} disabled={loading}
                         className="flex-1 py-3 bg-[#D92D20] text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50">

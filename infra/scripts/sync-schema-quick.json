@@ -1,0 +1,12 @@
+{
+  "commands": [
+    "docker stop reportafrica-api && docker rm reportafrica-api",
+    "docker run -d --name reportafrica-api-sync -p 3001:3001 --env-file /home/ec2-user/.env.production -e NODE_ENV=development reportafrica-api",
+    "sleep 20",
+    "curl -s http://localhost:3001/api/v1/health",
+    "docker stop reportafrica-api-sync && docker rm reportafrica-api-sync",
+    "docker run -d --name reportafrica-api --restart always -p 3001:3001 --env-file /home/ec2-user/.env.production reportafrica-api",
+    "sleep 10",
+    "curl -s http://localhost:3001/api/v1/health"
+  ]
+}

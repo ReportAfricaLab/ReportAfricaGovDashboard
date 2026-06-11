@@ -1,0 +1,5 @@
+{
+  "commands": [
+    "docker logs reportafrica-api --tail 20 2>&1 | grep -i 'error\\|Error\\|500\\|column'"
+  ]
+}

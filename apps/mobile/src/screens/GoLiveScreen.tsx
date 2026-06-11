@@ -346,10 +346,18 @@ function RecordingsTab({ country }: { country: string }) {
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
       ListEmptyComponent={<Text style={styles.emptyText}>{loading ? 'Loading...' : 'No recordings yet'}</Text>}
-      renderItem={({ item }) => (
+      renderItem={({ item }: { item: any }) => (
         <View style={styles.streamCard}>
+          {item.thumbnailUrl ? (
+            <View style={{ height: 150, borderRadius: 8, overflow: 'hidden', marginBottom: 8 }}>
+              <WebView source={{ uri: item.recordingUrl && item.recordingUrl.startsWith('http') ? item.recordingUrl : item.thumbnailUrl }} style={{ flex: 1 }} />
+            </View>
+          ) : null}
           <Text style={styles.streamTitle}>{item.title}</Text>
           <Text style={styles.streamMeta}>{item.user?.displayName} · {new Date(item.createdAt).toLocaleDateString()}</Text>
+          {item.recordingUrl && item.recordingUrl.startsWith('http') && (
+            <Text style={{ fontSize: 11, color: theme.colors.primary, marginTop: 4 }}>▶ Replay available</Text>
+          )}
         </View>
       )}
     />
