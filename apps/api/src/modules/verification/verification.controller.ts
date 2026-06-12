@@ -27,4 +27,9 @@ export class VerificationController {
   getStats(@Param('reportId') reportId: string) {
     return this.verificationService.getReportVerificationStats(reportId);
   }
+
+  @Get('disputes')
+  getDisputes(@Param('reportId') reportId: string) {
+    return this.verificationService.getDisputeNotes(reportId);
+  }
 }

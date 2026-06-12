@@ -80,4 +80,22 @@ export class VerificationService {
       await this.trustService.addScore(voter.userId, 'report_upvoted'); // +2 bonus for accurate verification
     }
   }
+
+  async getDisputeNotes(reportId: string) {
+    const disputes = await this.verificationRepo.find({
+      where: { reportId, vote: 'dispute' },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+      take: 20,
+    });
+    return {
+      count: disputes.length,
+      notes: disputes.filter(d => d.comment).map(d => ({
+        id: d.id,
+        username: d.user?.displayName || 'Anonymous',
+        note: d.comment,
+        createdAt: d.createdAt,
+      })),
+    };
+  }
 }

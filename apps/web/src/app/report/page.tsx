@@ -213,6 +213,12 @@ function ReportContent() {
           )}
         </div>
 
+        {verifyStats && verifyStats.disputes >= 3 && (
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm font-semibold text-amber-800">⚠️ Disputed: This report is under community review.</p>
+            <p className="text-xs text-amber-600 mt-1">{verifyStats.disputes} community members have flagged concerns about this report&apos;s accuracy.</p>
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-gray-900 mb-3">{report.aiHeadline || report.title}</h1>
         <p className="text-gray-600 leading-relaxed mb-3">{translatedText || report.description}</p>
         <button type="button" onClick={async () => {

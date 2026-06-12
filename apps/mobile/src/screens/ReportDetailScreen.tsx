@@ -156,6 +156,12 @@ export default function ReportDetailScreen({ route }: any) {
       </View>
 
       <Text style={styles.title}>{report.aiHeadline || report.title}</Text>
+      {verifyStats && verifyStats.disputes >= 3 && (
+        <View style={styles.disputedBanner}>
+          <Text style={styles.disputedTitle}>⚠️ Disputed: Under community review</Text>
+          <Text style={styles.disputedSub}>{verifyStats.disputes} members flagged concerns about accuracy.</Text>
+        </View>
+      )}
       <Text style={styles.description}>{translatedText || report.description}</Text>
       <TouchableOpacity onPress={async () => {
         if (translatedText) { setTranslatedText(''); return; }
@@ -313,6 +319,9 @@ const styles = StyleSheet.create({
   category: { fontSize: 12, color: theme.colors.light.textSecondary, textTransform: 'capitalize' },
   verification: { marginLeft: 'auto', fontSize: 11, color: theme.colors.primary, textTransform: 'capitalize' },
   title: { fontSize: 22, fontWeight: '700', color: theme.colors.light.text, marginBottom: 10 },
+  disputedBanner: { backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a', borderRadius: 8, padding: 12, marginBottom: 12 },
+  disputedTitle: { fontSize: 13, fontWeight: '700', color: '#92400e' },
+  disputedSub: { fontSize: 11, color: '#b45309', marginTop: 4 },
   description: { fontSize: theme.fontSize.md, color: theme.colors.light.textSecondary, lineHeight: 24, marginBottom: 8 },
   translateBtn: { fontSize: 12, color: theme.colors.info, fontWeight: '600', marginBottom: 16 },
   locationBox: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.light.border, marginBottom: 16 },
