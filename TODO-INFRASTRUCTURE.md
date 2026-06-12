@@ -28,3 +28,11 @@
 - Current API URL: https://34-242-14-140.nip.io/api/v1
 - nip.io domains can't use Cloudflare (don't own DNS)
 - Once we have our own domain, also set up: SSL via Cloudflare, CDN caching for static assets
+
+## Step 9: Backup Hardening (PARTIALLY BLOCKED)
+
+**RDS backup retention:** BLOCKED at 1 day (free tier limit — FreeTierRestrictionError)
+**S3 versioning:** Already enabled ✅
+**AMI backup:** Created 2026-06-12 (ami-0066c0976f0f4017f) ✅
+
+**When budget allows:** Upgrade RDS to 7-day retention ($0 if still under 20GB backup, but requires paid account plan)
