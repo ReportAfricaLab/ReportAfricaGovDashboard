@@ -125,6 +125,7 @@ export class TipsService {
   async sendTip(tipperId: string, dto: { reportId: string; amount: number; message?: string }) {
     const report = await this.reportRepo.findOne({ where: { id: dto.reportId } });
     if (!report) throw new NotFoundException('Report not found');
+    if (!report.authorId) throw new BadRequestException('Cannot tip anonymous reports');
 
     // Self-tip prevention
     if (tipperId === report.authorId) {

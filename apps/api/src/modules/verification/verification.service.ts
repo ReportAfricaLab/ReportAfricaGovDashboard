@@ -62,7 +62,7 @@ export class VerificationService {
       await this.reportRepo.update(reportId, { verificationLevel: 'community_verified' });
 
       // Reward the report author for getting verified
-      await this.trustService.addScore(report.authorId, 'report_verified');
+      if (report.authorId) await this.trustService.addScore(report.authorId, 'report_verified');
       return true;
     }
 

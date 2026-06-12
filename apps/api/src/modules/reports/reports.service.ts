@@ -25,16 +25,20 @@ export class ReportsService {
   ) {}
 
   async create(authorId: string, country: string, dto: CreateReportDto): Promise<ReportEntity> {
-    // Duplicate detection - check if same user posted similar report in last 10 minutes
-    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000);
-    const duplicate = await this.reportRepo
-      .createQueryBuilder('r')
-      .where('r.authorId = :authorId', { authorId })
-      .andWhere('r.title = :title', { title: dto.title })
-      .andWhere('r.createdAt > :tenMinAgo', { tenMinAgo })
-      .getOne();
-    if (duplicate) {
-      throw new BadRequestException('You already submitted a similar report. Please wait before posting again.');
+    const isAnon = dto.isAnonymous === true;
+
+    // Duplicate detection (skip for anonymous — no user link)
+    if (!isAnon) {
+      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const duplicate = await this.reportRepo
+        .createQueryBuilder('r')
+        .where('r.authorId = :authorId', { authorId })
+        .andWhere('r.title = :title', { title: dto.title })
+        .andWhere('r.createdAt > :tenMinAgo', { tenMinAgo })
+        .getOne();
+      if (duplicate) {
+        throw new BadRequestException('You already submitted a similar report. Please wait before posting again.');
+      }
     }
 
     // AI moderation check
@@ -42,11 +46,11 @@ export class ReportsService {
 
     if (!modResult.isApproved) {
       if (modResult.flags.includes('hate_speech')) {
-        await this.trustService.addScore(authorId, 'report_flagged_fake');
+        if (!isAnon) await this.trustService.addScore(authorId, 'report_flagged_fake');
         throw new BadRequestException('Report rejected: contains hate speech or incitement to violence');
       }
       if (modResult.flags.includes('spam')) {
-        await this.trustService.addScore(authorId, 'report_flagged_spam');
+        if (!isAnon) await this.trustService.addScore(authorId, 'report_flagged_spam');
         throw new BadRequestException('Report rejected: appears to be spam or irrelevant content');
       }
       if (modResult.flags.includes('dangerous_misinformation')) {
@@ -56,7 +60,8 @@ export class ReportsService {
 
     const report = this.reportRepo.create({
       ...dto,
-      authorId,
+      authorId: isAnon ? (null as any) : authorId,
+      isAnonymous: isAnon,
       country,
       severity: dto.severity || 'medium',
       media: dto.media || [],
@@ -65,28 +70,32 @@ export class ReportsService {
 
     const saved = await this.reportRepo.save(report);
 
-    // Award trust points for creating a report
-    await this.trustService.addScore(authorId, 'report_created');
+    // Only link activity to user for non-anonymous reports
+    if (!isAnon) {
+      await this.trustService.addScore(authorId, 'report_created');
+      this.followsService.notifyFollowers(authorId, saved.title, saved.id).catch(() => {});
+      this.watchlistService.matchAndNotify({
+        id: saved.id,
+        title: saved.title,
+        category: saved.category,
+        latitude: saved.latitude,
+        longitude: saved.longitude,
+        authorId,
+      }).catch(() => {});
+      this.referralService.checkAndRewardReferrer(authorId).catch(() => {});
+    } else {
+      // Anonymous: still notify watchlists (location-based) but without author link
+      this.watchlistService.matchAndNotify({
+        id: saved.id,
+        title: saved.title,
+        category: saved.category,
+        latitude: saved.latitude,
+        longitude: saved.longitude,
+        authorId: null as any,
+      }).catch(() => {});
+    }
 
-    // Invalidate feed cache for this country
     await this.invalidateFeedCache(country);
-
-    // Notify followers
-    this.followsService.notifyFollowers(authorId, saved.title, saved.id).catch(() => {});
-
-    // Match watchlists and notify
-    this.watchlistService.matchAndNotify({
-      id: saved.id,
-      title: saved.title,
-      category: saved.category,
-      latitude: saved.latitude,
-      longitude: saved.longitude,
-      authorId,
-    }).catch(() => {});
-
-    // Check referral reward (first report triggers referrer reward)
-    this.referralService.checkAndRewardReferrer(authorId).catch(() => {});
-
     return saved;
   }
 
@@ -98,6 +107,12 @@ export class ReportsService {
     }
 
     const report = await this.reportRepo.findOne({ where: { id }, relations: ['author'] });
+
+    // Strip author data for anonymous reports
+    if (report?.isAnonymous) {
+      report.author = null as any;
+      report.authorId = null;
+    }
 
     if (this.cache && report) {
       await this.cache.set(cacheKey, report, 30000);
@@ -267,7 +282,7 @@ export class ReportsService {
     if (!report) return null;
 
     await this.reportRepo.increment({ id }, 'upvotes', 1);
-    await this.trustService.addScore(report.authorId, 'report_upvoted');
+    if (report.authorId) await this.trustService.addScore(report.authorId, 'report_upvoted');
     await this.invalidateFeedCache(report.country);
 
     return this.findById(id);
@@ -278,7 +293,7 @@ export class ReportsService {
     if (!report) return null;
 
     await this.reportRepo.increment({ id }, 'downvotes', 1);
-    await this.trustService.addScore(report.authorId, 'report_downvoted');
+    if (report.authorId) await this.trustService.addScore(report.authorId, 'report_downvoted');
 
     return this.findById(id);
   }

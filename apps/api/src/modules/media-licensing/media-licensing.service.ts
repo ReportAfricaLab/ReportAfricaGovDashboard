@@ -29,6 +29,7 @@ export class MediaLicensingService {
   }) {
     const report = await this.reportRepo.findOne({ where: { id: dto.reportId } });
     if (!report) throw new NotFoundException('Report not found');
+    if (!report.authorId) throw new BadRequestException('Cannot license anonymous reports');
 
     const license = this.licenseRepo.create({
       ...dto,

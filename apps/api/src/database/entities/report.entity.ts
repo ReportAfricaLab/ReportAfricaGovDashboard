@@ -55,9 +55,9 @@ export class ReportEntity {
   @Index()
   country: string;
 
-  @Column({ name: 'author_id' })
+  @Column({ name: 'author_id', nullable: true })
   @Index()
-  authorId: string;
+  authorId: string | null;
 
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'author_id' })
