@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { IsString, IsNumber, IsOptional, IsBoolean, IsInt } from 'class-validator';
@@ -31,9 +31,32 @@ export class CoursesController {
     return this.service.getPublishedCourses();
   }
 
+  @Get('my-enrollments')
+  @UseGuards(AuthGuard('jwt'))
+  getMyEnrollments(@Request() req: any) {
+    return this.service.getMyEnrollments(req.user.id);
+  }
+
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.service.getCourseById(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':courseId/enroll')
+  enroll(@Request() req: any, @Param('courseId') courseId: string) {
+    return this.service.enroll(req.user.id, courseId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':courseId/lessons/:lessonId/complete')
+  completeLesson(@Request() req: any, @Param('courseId') courseId: string, @Param('lessonId') lessonId: string) {
+    return this.service.completeLesson(req.user.id, courseId, lessonId);
+  }
+
+  @Get('certificates/verify/:certificateId')
+  verifyCertificate(@Param('certificateId') certificateId: string) {
+    return this.service.verifyCertificate(certificateId);
   }
 }
 

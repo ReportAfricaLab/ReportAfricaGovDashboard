@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CourseEntity, LessonEntity } from '../../database/entities';
+import { CourseEntity, LessonEntity, EnrollmentEntity } from '../../database/entities';
 
 @Injectable()
 export class CoursesService {
@@ -10,6 +10,8 @@ export class CoursesService {
     private readonly courseRepo: Repository<CourseEntity>,
     @InjectRepository(LessonEntity)
     private readonly lessonRepo: Repository<LessonEntity>,
+    @InjectRepository(EnrollmentEntity)
+    private readonly enrollmentRepo: Repository<EnrollmentEntity>,
   ) {}
 
   // === PUBLIC ===
@@ -75,5 +77,74 @@ export class CoursesService {
     if (!lesson) throw new NotFoundException('Lesson not found');
     await this.lessonRepo.remove(lesson);
     return { deleted: true };
+  }
+
+  // === ENROLLMENTS & CERTIFICATES ===
+
+  private generateCertId(): string {
+    return 'RA-CERT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
+  async enroll(userId: string, courseId: string) {
+    const course = await this.courseRepo.findOne({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    const existing = await this.enrollmentRepo.findOne({ where: { userId, courseId } });
+    if (existing) return existing;
+    const enrollment = this.enrollmentRepo.create({ userId, courseId, completedLessons: [] });
+    return this.enrollmentRepo.save(enrollment);
+  }
+
+  async completeLesson(userId: string, courseId: string, lessonId: string) {
+    let enrollment = await this.enrollmentRepo.findOne({ where: { userId, courseId } });
+    if (!enrollment) {
+      enrollment = this.enrollmentRepo.create({ userId, courseId, completedLessons: [] });
+    }
+    if (!enrollment.completedLessons.includes(lessonId)) {
+      enrollment.completedLessons = [...enrollment.completedLessons, lessonId];
+    }
+    // Check if all lessons done
+    const course = await this.courseRepo.findOne({ where: { id: courseId }, relations: ['lessons'] });
+    if (course && course.lessons.length > 0 && enrollment.completedLessons.length >= course.lessons.length) {
+      if (!enrollment.completedAt) {
+        enrollment.completedAt = new Date();
+        enrollment.certificateId = this.generateCertId();
+        // Check master certificate
+        await this.checkMasterCertificate(userId);
+      }
+    }
+    return this.enrollmentRepo.save(enrollment);
+  }
+
+  private async checkMasterCertificate(userId: string) {
+    const allCourses = await this.courseRepo.find({ where: { isPublished: true } });
+    const enrollments = await this.enrollmentRepo.find({ where: { userId } });
+    const completedCourseIds = enrollments.filter(e => e.completedAt && e.courseId !== 'master').map(e => e.courseId);
+    if (allCourses.length > 0 && allCourses.every(c => completedCourseIds.includes(c.id))) {
+      const existing = await this.enrollmentRepo.findOne({ where: { userId, courseId: 'master' } });
+      if (!existing) {
+        const master = this.enrollmentRepo.create({
+          userId, courseId: 'master', completedLessons: [],
+          completedAt: new Date(),
+          certificateId: 'RA-MASTER-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+        });
+        await this.enrollmentRepo.save(master);
+      }
+    }
+  }
+
+  async getMyEnrollments(userId: string) {
+    return this.enrollmentRepo.find({ where: { userId }, relations: ['course'], order: { createdAt: 'DESC' } });
+  }
+
+  async verifyCertificate(certificateId: string) {
+    const enrollment = await this.enrollmentRepo.findOne({ where: { certificateId }, relations: ['user', 'course'] });
+    if (!enrollment) return { valid: false };
+    return {
+      valid: true,
+      userName: enrollment.user?.displayName || enrollment.user?.username || 'Student',
+      courseTitle: enrollment.courseId === 'master' ? 'Certified Citizen Journalist — Complete Program' : enrollment.course?.title,
+      completedAt: enrollment.completedAt,
+      certificateId: enrollment.certificateId,
+    };
   }
 }
