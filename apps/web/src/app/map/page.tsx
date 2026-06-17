@@ -124,7 +124,7 @@ export default function MapPage() {
         {/* Safe Route Toggle */}
         <div className="absolute top-4 left-4 z-10">
           <button onClick={() => {
-            if (!isPremium) { alert('Safe Route is a Premium feature. Subscribe at /subscription to unlock.'); return; }
+            if (!isPremium) { if(confirm('Safe Route is a Premium feature. Go to subscription page?')) window.location.href = '/subscription'; return; }
             const next = !safeRouteActive;
             setSafeRouteActive(next);
             if (map.current && mapReady) {
