@@ -16,7 +16,7 @@ interface Report {
   downvotes: number;
   commentCount: number;
   createdAt: string;
-  author?: { displayName: string; username: string; trustLevel: string; isCertified?: boolean };
+  author?: { displayName: string; username: string; trustLevel: string; isCertified?: boolean; subscriptionTier?: string };
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -61,7 +61,7 @@ export default function ReportCard({ report }: { report: Report }) {
       <p className="text-sm text-gray-500 line-clamp-2 mb-3">{report.description}</p>
 
       <div className="flex items-center justify-between text-xs text-gray-400">
-        <span>{report.author?.displayName || 'Anonymous'}{report.author?.isCertified && ' 🎓'}</span>
+        <span>{report.author?.displayName || 'Anonymous'}{report.author?.isCertified && ' 🎓'}{report.author?.subscriptionTier === 'legend' && ' 👑'}{report.author?.subscriptionTier === 'elite' && ' 💜'}{report.author?.subscriptionTier === 'pro' && ' 🔵'}</span>
         <div className="flex items-center gap-3">
           <span>↑ {report.upvotes}</span>
           <span>💬 {report.commentCount}</span>

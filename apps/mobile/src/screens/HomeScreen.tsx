@@ -22,7 +22,7 @@ interface Report {
   upvotes: number;
   commentCount: number;
   createdAt: string;
-  author?: { displayName: string; trustLevel: string; isCertified?: boolean };
+  author?: { displayName: string; trustLevel: string; isCertified?: boolean; subscriptionTier?: string };
 }
 
 export default function HomeScreen() {
@@ -97,7 +97,7 @@ export default function HomeScreen() {
       <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.aiHeadline || item.title}</Text>
       <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={3}>{item.description}</Text>
       <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
-        <Text style={[styles.meta, { color: colors.textSecondary }]}>{item.author?.displayName || 'Anonymous'}{item.author?.isCertified ? ' 🎓' : ''}</Text>
+        <Text style={[styles.meta, { color: colors.textSecondary }]}>{item.author?.displayName || 'Anonymous'}{item.author?.isCertified ? ' 🎓' : ''}{item.author?.subscriptionTier === 'legend' ? ' 👑' : item.author?.subscriptionTier === 'elite' ? ' 💜' : item.author?.subscriptionTier === 'pro' ? ' 🔵' : ''}</Text>
         <Text style={[styles.meta, { color: colors.textSecondary }]}>↑ {item.upvotes} · 💬 {item.commentCount}</Text>
       </View>
     </TouchableOpacity>

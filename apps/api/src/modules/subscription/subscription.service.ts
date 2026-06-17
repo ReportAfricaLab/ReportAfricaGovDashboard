@@ -6,8 +6,8 @@ import { PaystackService } from '../donations/paystack.service';
 
 const TIERS = {
   pro: { usd: 3.3, label: 'Reporter Pro' },
-  elite: { usd: 13.3, label: 'Reporter Elite' },
-  legend: { usd: 33.3, label: 'Reporter Legend' },
+  elite: { usd: 10, label: 'Reporter Elite' },
+  legend: { usd: 23.3, label: 'Reporter Legend' },
 };
 
 const COUNTRY_CURRENCY: Record<string, string> = {
@@ -41,9 +41,9 @@ export class SubscriptionService {
   }
 
   private getFeatures(tier: string): string[] {
-    const base = ['✓ Verified badge', '✓ Priority feed ranking', '✓ Basic analytics'];
-    if (tier === 'elite' || tier === 'legend') base.push('✓ AI headline tools', '✓ Report scheduling', '✓ Higher tip visibility');
-    if (tier === 'legend') base.push('✓ Media licensing priority', '✓ Newsroom connections', '✓ Dedicated support');
+    const base = ['✓ Verified badge', '✓ Priority feed ranking', '✓ Safe Route Navigation'];
+    if (tier === 'elite' || tier === 'legend') base.push('✓ Academy: MoJo Basics course FREE');
+    if (tier === 'legend') base.push('✓ Academy: Safety Reporting course FREE');
     return base;
   }
 
@@ -73,6 +73,19 @@ export class SubscriptionService {
     const expires = new Date();
     expires.setMonth(expires.getMonth() + 1);
     await this.userRepo.update(userId, { subscriptionTier: tier, subscriptionExpires: expires });
+
+    // Auto-enroll in academy courses based on tier
+    if (tier === 'elite' || tier === 'legend') {
+      // Enroll in first published course (MoJo Basics)
+      const courses = await this.userRepo.manager.getRepository('CourseEntity').find({ where: { isPublished: true }, order: { sortOrder: 'ASC' } }) as any[];
+      if (courses.length > 0) {
+        await this.userRepo.manager.getRepository('EnrollmentEntity').save({ userId, courseId: courses[0].id, completedLessons: [] }).catch(() => {});
+      }
+      if (tier === 'legend' && courses.length > 1) {
+        // Also enroll in second course (Safety Reporting)
+        await this.userRepo.manager.getRepository('EnrollmentEntity').save({ userId, courseId: courses[1].id, completedLessons: [] }).catch(() => {});
+      }
+    }
   }
 
   async getMySubscription(userId: string) {

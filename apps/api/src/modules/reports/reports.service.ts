@@ -156,6 +156,7 @@ export class ReportsService {
       (r.view_count * 0.1) -
       (r.downvotes * 2) +
       (COALESCE(a.trust_score, 0) * 0.5) +
+      (CASE WHEN a.subscription_tier IN ('pro','elite','legend') THEN 30 ELSE 0 END) +
       (CASE r.verification_level
         WHEN 'officially_verified' THEN ${50 * verifiedBoost}
         WHEN 'ai_verified' THEN ${30 * verifiedBoost}
