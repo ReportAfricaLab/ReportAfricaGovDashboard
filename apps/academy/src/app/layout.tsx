@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="text-xl">🎓</span>
               <span className="font-bold text-gray-900">ReportAfrica <span className="text-[#0F7B6C]">Academy</span></span>
             </a>
-            <a href="https://reportafrica-web.vercel.app" className="text-xs text-gray-500 hover:text-[#0F7B6C]">← Back to ReportAfrica</a>
+            <a href="https://reportafrica.africa" className="text-xs text-gray-500 hover:text-[#0F7B6C]">← Back to ReportAfrica</a>
           </div>
         </header>
         {children}
@@ -20,3 +20,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

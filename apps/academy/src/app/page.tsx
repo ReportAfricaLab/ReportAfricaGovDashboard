@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getLocalPrice } from '@/lib/courses';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://34-242-14-140.nip.io/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.africa/api/v1';
 
 export default function AcademyHome() {
   const [user, setUser] = useState<any>(null);
@@ -28,7 +28,7 @@ export default function AcademyHome() {
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">Become a Professional Citizen Journalist</h1>
         <p className="text-gray-500 max-w-xl mx-auto">Master mobile reporting, safety protocols, verification techniques, and live broadcasting. Earn your ReportAfrica certification.</p>
-        {!user && <p className="mt-4 text-sm text-amber-600">💡 <a href="https://reportafrica-web.vercel.app/login" className="underline">Log in to ReportAfrica</a> to access courses with your account.</p>}
+        {!user && <p className="mt-4 text-sm text-amber-600">💡 <a href="https://reportafrica.africa/login" className="underline">Log in to ReportAfrica</a> to access courses with your account.</p>}
       </div>
 
       {/* Bundle */}
@@ -74,3 +74,4 @@ export default function AcademyHome() {
     </div>
   );
 }
+

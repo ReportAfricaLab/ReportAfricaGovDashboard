@@ -2,7 +2,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://34-242-14-140.nip.io/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.africa/api/v1';
 const LOGO_URL = 'https://reportafrica-web.vercel.app/logo.png';
 const ICON_URL = 'https://reportafrica-web.vercel.app/icon.png';
 
