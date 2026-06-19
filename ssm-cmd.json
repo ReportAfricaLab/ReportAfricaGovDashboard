@@ -1,1 +1,1 @@
-{"commands":["nginx -t 2>&1; echo ---; curl -sk https://localhost/api/v1/health 2>&1; echo ---; curl -s http://localhost:3001/api/v1/auth/login -X POST -H 'Content-Type: application/json' -d '{\"email\":\"test@test.com\",\"password\":\"test\"}' 2>&1"]}
+{"commands":["docker exec reportafrica-postgres-1 psql -U postgres -d reportafrica -c \"SELECT id, title, media FROM reports ORDER BY created_at DESC LIMIT 1;\" && echo --- && aws s3 ls s3://reportafrica-media-prod/images/ --recursive 2>&1 | tail -10"]}

@@ -80,12 +80,14 @@ export default function CreateReportPage() {
       // Upload media files
       const media: { type: string; url: string }[] = [];
       for (const m of mediaFiles) {
-        try {
-          const fileType = m.type.startsWith('video') ? 'video' : 'image';
-          const { uploadUrl, fileUrl } = await api.upload.getPresignedUrl(token, fileType, m.file.type);
-          await fetch(uploadUrl, { method: 'PUT', body: m.file, headers: { 'Content-Type': m.file.type } });
-          media.push({ type: fileType, url: m.blurredUrl || fileUrl });
-        } catch {}
+        const fileType = m.type.startsWith('video') ? 'video' : 'image';
+        const { uploadUrl, fileUrl } = await api.upload.getPresignedUrl(token, fileType, m.file.type);
+        const putRes = await fetch(uploadUrl, { method: 'PUT', body: m.file, headers: { 'Content-Type': m.file.type } });
+        if (putRes.ok) {
+          media.push({ type: m.type, url: m.blurredUrl || fileUrl });
+        } else {
+          console.error('S3 upload failed:', putRes.status, await putRes.text().catch(() => ''));
+        }
       }
       await api.reports.create(token, { ...form, ...location, media, contentHash });
       router.push('/feed');
