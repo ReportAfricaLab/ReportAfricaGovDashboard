@@ -1,11 +1,47 @@
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1').replace(/[.\/]+$/, '');
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1').replace(/[.\\/]+$/, '');
 
 interface FetchOptions extends RequestInit {
   token?: string;
+  _retried?: boolean;
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('ra_refresh') : null;
+    if (!refreshToken) return null;
+
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+      credentials: 'include',
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem('ra_token', data.token);
+      return data.token;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function clearAuthAndRedirect() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('ra_token');
+  localStorage.removeItem('ra_refresh');
+  localStorage.removeItem('ra_user');
+  // Only redirect if not already on login/register page
+  if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+    window.location.href = '/login';
+  }
 }
 
 async function fetchAPI(endpoint: string, options: FetchOptions = {}) {
-  const { token, ...fetchOpts } = options;
+  const { token, _retried, ...fetchOpts } = options;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -13,6 +49,19 @@ async function fetchAPI(endpoint: string, options: FetchOptions = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(`${API_URL}${endpoint}`, { ...fetchOpts, headers });
+
+  // Auto-refresh on 401 (only once to prevent loops)
+  if (res.status === 401 && token && !_retried) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      // Retry with new token
+      return fetchAPI(endpoint, { ...options, token: newToken, _retried: true });
+    }
+    // Refresh failed — session expired
+    clearAuthAndRedirect();
+    throw new Error('Session expired. Please log in again.');
+  }
+
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Request failed');
   return data;
@@ -120,7 +169,7 @@ export const api = {
     delete: (token: string, id: string) => fetchAPI(`/watchlist/${id}`, { method: 'DELETE', token }),
   },
   tips: {
-    create: (body: { reportId: string; amount: number; email: string; message?: string }) => fetchAPI('/tips', { method: 'POST', body: JSON.stringify(body) }),
+    create: (token: string, body: { reportId: string; amount: number; email: string; message?: string }) => fetchAPI('/tips', { method: 'POST', body: JSON.stringify(body), token }),
     getByReport: (reportId: string) => fetchAPI(`/tips/report/${reportId}`),
   },
 };
