@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, Share, Image } from 'react-native';
+import { Video, ResizeMode } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { reportsAPI, followsAPI, tipsAPI, reportUpdatesAPI } from '../services/api';
 import api from '../services/api';
@@ -164,6 +165,27 @@ export default function ReportDetailScreen({ route }: any) {
         </View>
       )}
       <Text style={styles.description}>{translatedText || report.description}</Text>
+
+      {/* Media - Images and Videos */}
+      {report.media && report.media.length > 0 && report.media[0]?.url && (
+        <View style={styles.mediaSection}>
+          {report.media.map((m: any, i: number) => (
+            <View key={i} style={styles.mediaItem}>
+              {m.type?.startsWith('video') ? (
+                <Video
+                  source={{ uri: m.url }}
+                  style={styles.mediaVideo}
+                  useNativeControls
+                  resizeMode={ResizeMode.CONTAIN}
+                  isLooping={false}
+                />
+              ) : (
+                <Image source={{ uri: m.url }} style={styles.mediaImage} resizeMode="cover" />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
       <TouchableOpacity onPress={async () => {
         if (translatedText) { setTranslatedText(''); return; }
         setTranslating(true);
@@ -325,6 +347,10 @@ const styles = StyleSheet.create({
   disputedTitle: { fontSize: 13, fontWeight: '700', color: '#92400e' },
   disputedSub: { fontSize: 11, color: '#b45309', marginTop: 4 },
   description: { fontSize: theme.fontSize.md, color: theme.colors.light.textSecondary, lineHeight: 24, marginBottom: 8 },
+  mediaSection: { marginBottom: 16 },
+  mediaItem: { marginBottom: 8, borderRadius: 12, overflow: 'hidden' },
+  mediaImage: { width: '100%', height: 250, borderRadius: 12, backgroundColor: '#f3f4f6' },
+  mediaVideo: { width: '100%', height: 220, borderRadius: 12, backgroundColor: '#000' },
   translateBtn: { fontSize: 12, color: theme.colors.info, fontWeight: '600', marginBottom: 16 },
   locationBox: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#fff', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.light.border, marginBottom: 16 },
   locationText: { fontSize: 13, color: theme.colors.light.textSecondary },

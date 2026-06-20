@@ -99,7 +99,14 @@ export default function HomeScreen() {
       <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.aiHeadline || item.title}</Text>
       <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={3}>{item.description}</Text>
       {item.media && item.media.length > 0 && item.media[0]?.url && (
-        <Image source={{ uri: item.media[0].url }} style={styles.cardMedia} resizeMode="cover" />
+        item.media[0].type?.startsWith('video') ? (
+          <View style={styles.cardMediaVideo}>
+            <Image source={{ uri: item.media[0].url }} style={styles.cardMedia} resizeMode="cover" />
+            <View style={styles.playOverlay}><Text style={styles.playIcon}>▶</Text></View>
+          </View>
+        ) : (
+          <Image source={{ uri: item.media[0].url }} style={styles.cardMedia} resizeMode="cover" />
+        )
       )}
       <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
         <Text style={[styles.meta, { color: colors.textSecondary }]}>{item.author?.displayName || 'Anonymous'}{item.author?.isCertified ? ' 🎓' : ''}{item.author?.subscriptionTier === 'legend' ? ' 👑' : item.author?.subscriptionTier === 'elite' ? ' 💜' : item.author?.subscriptionTier === 'pro' ? ' 🔵' : ''}</Text>
@@ -279,6 +286,9 @@ const styles = StyleSheet.create({
   title: { fontSize: theme.fontSize.md, fontWeight: '600', color: theme.colors.light.text, marginBottom: 4 },
   description: { fontSize: theme.fontSize.sm, color: theme.colors.light.textSecondary, lineHeight: 20 },
   cardMedia: { width: '100%', height: 180, borderRadius: 8, marginTop: 10, backgroundColor: '#f3f4f6' },
+  cardMediaVideo: { position: 'relative', marginTop: 10 },
+  playOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 8 },
+  playIcon: { fontSize: 36, color: '#fff' },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.light.border },
   meta: { fontSize: theme.fontSize.xs, color: theme.colors.light.textSecondary },
   empty: { alignItems: 'center', paddingTop: 60 },
