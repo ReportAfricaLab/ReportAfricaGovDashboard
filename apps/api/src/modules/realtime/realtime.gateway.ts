@@ -23,12 +23,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnModuleInit {
     private readonly configService: ConfigService,
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     const redisHost = this.configService.get('REDIS_HOST', 'localhost');
     const redisPort = this.configService.get<number>('REDIS_PORT', 6379);
     try {
-      const pubClient = new Redis({ host: redisHost, port: redisPort, lazyConnect: true });
+      const pubClient = new Redis({ host: redisHost, port: redisPort });
       const subClient = pubClient.duplicate();
+      await pubClient.ping();
       this.server.adapter(createAdapter(pubClient, subClient) as any);
       this.logger.log(`Socket.IO Redis adapter connected (${redisHost}:${redisPort})`);
     } catch (err) {
