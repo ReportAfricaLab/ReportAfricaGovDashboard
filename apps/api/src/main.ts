@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import * as helmet from 'helmet';
 const cookieParser = require('cookie-parser');
 import { DataSource } from 'typeorm';
+import { createAdapter } from '@socket.io/redis-adapter';
+import Redis from 'ioredis';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { initSentry, SentryExceptionFilter } from './common/sentry';
@@ -62,9 +65,28 @@ async function bootstrap() {
   app.useGlobalFilters(new SentryExceptionFilter(httpAdapterHost.httpAdapter));
 
   const port = process.env.PORT || 3001;
+  const logger = new Logger('Bootstrap');
+
+  // Redis adapter for Socket.IO (required for PM2 cluster mode)
+  const redisHost = process.env.REDIS_HOST || 'localhost';
+  const redisPort = Number(process.env.REDIS_PORT) || 6379;
+  try {
+    const pubClient = new Redis({ host: redisHost, port: redisPort });
+    const subClient = pubClient.duplicate();
+    const redisIoAdapter = new IoAdapter(app);
+    (redisIoAdapter as any).createIOServer = function (port: number, options?: any) {
+      const server = IoAdapter.prototype.createIOServer.call(this, port, options);
+      server.adapter(createAdapter(pubClient, subClient));
+      return server;
+    };
+    app.useWebSocketAdapter(redisIoAdapter);
+    logger.log(`Socket.IO Redis adapter connected (${redisHost}:${redisPort})`);
+  } catch (err) {
+    logger.warn('Redis adapter setup failed: ' + (err as any).message);
+  }
+
   await app.listen(port);
 
-  const logger = new Logger('Bootstrap');
   logger.log(`ReportAfrica API running on port ${port} [${process.env.NODE_ENV || 'development'}]`);
 
   // Run pending migrations for columns that were added to entities but not synced in production

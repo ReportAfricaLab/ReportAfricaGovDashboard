@@ -24,16 +24,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayInit {
   ) {}
 
   afterInit(server: Server) {
-    const redisHost = this.configService.get('REDIS_HOST', 'localhost');
-    const redisPort = this.configService.get<number>('REDIS_PORT', 6379);
-    try {
-      const pubClient = new Redis({ host: redisHost, port: redisPort });
-      const subClient = pubClient.duplicate();
-      server.adapter(createAdapter(pubClient, subClient) as any);
-      this.logger.log(`Socket.IO Redis adapter connected (${redisHost}:${redisPort})`);
-    } catch (err) {
-      this.logger.warn('Redis adapter failed: ' + (err as any).message);
-    }
+    // Redis adapter is set at app level in main.ts
+    this.logger.log('RealtimeGateway initialized');
   }
 
   handleConnection(client: Socket) {
