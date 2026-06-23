@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Audio } from 'expo-av';
 import { useAppStore } from '../store/useAppStore';
 import { useI18n } from '../store/useI18n';
 import { reportsAPI, faceBlurAPI } from '../services/api';
@@ -48,6 +49,11 @@ export default function CreateReportScreen() {
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.All, quality: 0.8, exif: false, allowsEditing: true, aspect: [16, 9] });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
+      // Video duration check (max 3 minutes)
+      if (asset.type === 'video' && asset.duration && asset.duration > 180000) {
+        Alert.alert('Video Too Long', 'Video must be under 3 minutes. For longer coverage, use Go Live.');
+        return;
+      }
       setMediaFiles((prev) => [...prev, { uri: asset.uri, type: asset.type === 'video' ? 'video/mp4' : 'image/jpeg', fileName: asset.fileName || `media_${Date.now()}` }]);
     }
   };
@@ -56,6 +62,11 @@ export default function CreateReportScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.All, quality: 0.8, exif: false, allowsEditing: true, aspect: [16, 9], allowsMultipleSelection: false });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
+      // Video duration check (max 3 minutes)
+      if (asset.type === 'video' && asset.duration && asset.duration > 180000) {
+        Alert.alert('Video Too Long', 'Video must be under 3 minutes. For longer coverage, use Go Live.');
+        return;
+      }
       setMediaFiles((prev) => [...prev, { uri: asset.uri, type: asset.type === 'video' ? 'video/mp4' : 'image/jpeg', fileName: asset.fileName || `media_${Date.now()}` }].slice(0, 5));
     }
   };
@@ -273,6 +284,7 @@ export default function CreateReportScreen() {
           <Text style={styles.mediaBtnText}>📁 Gallery</Text>
         </TouchableOpacity>
       </View>
+      <Text style={styles.mediaLimitText}>📹 Videos: max 3 min, 75MB | 📷 Photos: max 10MB</Text>
       {mediaFiles.length > 0 && (
         <View style={styles.mediaGrid}>
           {mediaFiles.map((m, i) => (
@@ -349,6 +361,7 @@ const styles = StyleSheet.create({
   mediaRow: { flexDirection: 'row', gap: 10 },
   mediaBtn: { flex: 1, paddingVertical: 14, borderRadius: 10, borderWidth: 2, borderStyle: 'dashed', borderColor: theme.colors.light.border, alignItems: 'center', backgroundColor: '#fff' },
   mediaBtnText: { fontSize: 14, color: theme.colors.light.textSecondary, fontWeight: '600' },
+  mediaLimitText: { fontSize: 11, color: theme.colors.light.textSecondary, marginTop: 6, marginBottom: 4 },
   mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 },
   mediaThumbnailWrap: { width: 100, alignItems: 'center' },
   mediaThumbnail: { width: 100, height: 100, borderRadius: 8, overflow: 'hidden', position: 'relative' },

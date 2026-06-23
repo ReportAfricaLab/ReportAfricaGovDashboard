@@ -24,6 +24,17 @@ async function stripExif(file: File): Promise<File> {
   });
 }
 
+// Get video duration in seconds
+async function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => { resolve(video.duration); URL.revokeObjectURL(video.src); };
+    video.onerror = () => resolve(0);
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 const CATEGORIES = [
   { key: 'traffic', label: '🚗 Traffic' },
   { key: 'police_security', label: '🚨 Police & Security' },
@@ -140,6 +151,14 @@ export default function CreateReportPage() {
     if (!files) return;
     const incoming = Array.from(files).slice(0, 5 - mediaFiles.length);
     for (const file of incoming) {
+      // Video duration check (max 3 minutes)
+      if (file.type.startsWith('video/')) {
+        const duration = await getVideoDuration(file);
+        if (duration > 180) {
+          setError('Video must be under 3 minutes. For longer coverage, use Go Live.');
+          return;
+        }
+      }
       if (file.type.startsWith('image/')) {
         // Show cropper for images
         const stripped = await stripExif(file);
@@ -278,6 +297,7 @@ export default function CreateReportPage() {
               📁 Choose File
             </button>
           </div>
+          <p className="text-xs text-gray-400 mb-3">📹 Videos: max 3 minutes, 75MB | 📷 Photos: max 10MB</p>
           <input ref={cameraInputRef} type="file" accept="image/*,video/*" capture="environment" className="hidden"
             onChange={(e) => handleMediaAdd(e.target.files)} />
           <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden"

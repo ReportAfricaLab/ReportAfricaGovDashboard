@@ -73,7 +73,7 @@ export class UploadService {
   private getMaxSize(fileType: string): number {
     switch (fileType) {
       case 'image': return 10 * 1024 * 1024; // 10MB
-      case 'video': return 100 * 1024 * 1024; // 100MB
+      case 'video': return 75 * 1024 * 1024; // 75MB
       case 'audio':
       case 'voice_note': return 25 * 1024 * 1024; // 25MB
       case 'document': return 20 * 1024 * 1024; // 20MB
