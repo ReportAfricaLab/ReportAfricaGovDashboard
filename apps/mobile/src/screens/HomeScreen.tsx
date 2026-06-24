@@ -253,7 +253,7 @@ export default function HomeScreen() {
             <ScrollView>
               {[
                 { screen: 'Donations', icon: '🤝', label: 'Helping Hands' },
-                { screen: 'Challenges', icon: '🎯', label: 'Promo Challenges' },
+                { screen: 'Challenges', icon: '💰', label: 'Promo Gigs' },
                 { screen: 'Elections', icon: '🗳️', label: 'Elections' },
                 { screen: 'GoLive', icon: '🔴', label: 'Go Live' },
                 { screen: 'LicenseRequests', icon: '📄', label: 'Media Licensing' },

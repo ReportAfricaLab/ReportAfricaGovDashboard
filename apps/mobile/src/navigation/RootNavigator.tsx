@@ -63,7 +63,7 @@ export default function RootNavigator() {
             <Stack.Screen name="TrustProfile" component={TrustProfileScreen} options={{ headerShown: true, headerTitle: 'Trust Profile', headerTintColor: '#0F7B6C' }} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} options={{ headerShown: true, headerTitle: 'Premium Reporter', headerTintColor: '#0F7B6C' }} />
             <Stack.Screen name="Business" component={BusinessScreen} options={{ headerShown: true, headerTitle: 'Business Badge', headerTintColor: '#0F7B6C' }} />
-            <Stack.Screen name="Challenges" component={ChallengesScreen} options={{ headerShown: true, headerTitle: 'Promo Challenges', headerTintColor: '#0F7B6C' }} />
+            <Stack.Screen name="Challenges" component={ChallengesScreen} options={{ headerShown: true, headerTitle: 'Promo Gigs', headerTintColor: '#0F7B6C' }} />
             <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ headerShown: true, headerTitle: 'Change Password', headerTintColor: '#0F7B6C' }} />
             <Stack.Screen name="CreateCampaign" component={CreateCampaignScreen} options={{ headerShown: true, headerTitle: 'Create Campaign', headerTintColor: '#F97316' }} />
           </>
