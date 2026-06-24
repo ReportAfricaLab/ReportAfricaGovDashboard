@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../common/guards/admin.guard';
-import { IsString, IsNumber, IsOptional, IsBoolean, IsInt } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsInt, IsIn } from 'class-validator';
 import { CoursesService } from './courses.service';
 
 class CreateCourseDto {
@@ -16,8 +16,19 @@ class CreateCourseDto {
 
 class CreateLessonDto {
   @IsString() title: string;
+  @IsString() @IsOptional() @IsIn(['video', 'text', 'pdf']) type?: string;
   @IsString() @IsOptional() videoUrl?: string;
+  @IsString() @IsOptional() content?: string;
+  @IsString() @IsOptional() pdfUrl?: string;
   @IsString() @IsOptional() duration?: string;
+  @IsString() @IsOptional() moduleId?: string;
+  @IsInt() @IsOptional() sortOrder?: number;
+}
+
+class CreateModuleDto {
+  @IsString() courseId: string;
+  @IsString() title: string;
+  @IsString() @IsOptional() description?: string;
   @IsInt() @IsOptional() sortOrder?: number;
 }
 
@@ -108,5 +119,20 @@ export class AdminCoursesController {
   @Get('enrollments')
   getEnrollments() {
     return this.service.getAllEnrollments();
+  }
+
+  @Post('modules')
+  createModule(@Body() dto: CreateModuleDto) {
+    return this.service.createModule(dto);
+  }
+
+  @Patch('modules/:id')
+  updateModule(@Param('id') id: string, @Body() dto: any) {
+    return this.service.updateModule(id, dto);
+  }
+
+  @Delete('modules/:id')
+  deleteModule(@Param('id') id: string) {
+    return this.service.deleteModule(id);
   }
 }

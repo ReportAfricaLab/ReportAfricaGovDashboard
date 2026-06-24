@@ -18,4 +18,5 @@ export { NotificationEntity } from './notification.entity';
 export { BusinessEntity } from './business.entity';
 export { CourseEntity } from './course.entity';
 export { LessonEntity } from './lesson.entity';
+export { ModuleEntity } from './module.entity';
 export { EnrollmentEntity } from './enrollment.entity';
