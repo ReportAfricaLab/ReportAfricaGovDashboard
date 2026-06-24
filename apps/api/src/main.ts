@@ -169,6 +169,39 @@ async function bootstrap() {
           earned_at TIMESTAMP DEFAULT NOW()
         );
         CREATE INDEX IF NOT EXISTS idx_badges_user ON badges(user_id);
+        CREATE TABLE IF NOT EXISTS challenges (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          business_id UUID NOT NULL,
+          creator_id UUID REFERENCES users(id),
+          title VARCHAR NOT NULL,
+          description TEXT NOT NULL,
+          product_name VARCHAR NOT NULL,
+          product_image_url VARCHAR DEFAULT NULL,
+          pot_amount DECIMAL(12,2) NOT NULL,
+          currency VARCHAR(3) NOT NULL,
+          country VARCHAR(2) NOT NULL,
+          deadline TIMESTAMP NOT NULL,
+          status VARCHAR DEFAULT 'pending_payment',
+          payment_reference VARCHAR DEFAULT NULL,
+          entry_count INT DEFAULT 0,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_challenges_country ON challenges(country);
+        CREATE INDEX IF NOT EXISTS idx_challenges_status ON challenges(status);
+        CREATE TABLE IF NOT EXISTS challenge_entries (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          challenge_id UUID REFERENCES challenges(id) ON DELETE CASCADE,
+          reporter_id UUID REFERENCES users(id),
+          report_id UUID NOT NULL,
+          view_count INT DEFAULT 0,
+          rank INT DEFAULT NULL,
+          payout_amount DECIMAL(12,2) DEFAULT 0,
+          paid_out BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_challenge_entries_challenge ON challenge_entries(challenge_id);
+        CREATE INDEX IF NOT EXISTS idx_challenge_entries_reporter ON challenge_entries(reporter_id);
       `);
       logger.log('Startup migration: livestreams columns verified');
     } catch (err) {

@@ -42,6 +42,7 @@ import { BusinessModule } from './modules/business/business.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { QuizModule } from './modules/quiz/quiz.module';
+import { ChallengesModule } from './modules/challenges/challenges.module';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
     SubscriptionModule,
     CoursesModule,
     QuizModule,
+    ChallengesModule,
   ],
 })
 export class AppModule {}

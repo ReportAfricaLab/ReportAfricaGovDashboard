@@ -45,6 +45,8 @@ const NAV_LINKS = [
   { href: '/live', icon: '🔴', label: 'Live' },
   { href: '/elections', icon: '🗳️', label: 'Elections' },
   { href: '/donations', icon: '🤝', label: 'Helping Hands' },
+  { href: '/challenges', icon: '🎯', label: 'Challenges' },
+  { href: '/business', icon: '🏪', label: 'Business' },
   { href: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
   { href: '/watchlist', icon: '📍', label: 'Watchlists' },
 ];
