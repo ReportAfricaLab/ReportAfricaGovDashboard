@@ -120,6 +120,18 @@ async function bootstrap() {
         UPDATE courses SET usd_price=9 WHERE sort_order=4 AND usd_price!=9;
         UPDATE courses SET usd_price=13, sort_order=6 WHERE sort_order=5 AND title LIKE '%Live%';
         INSERT INTO courses (id, title, icon, usd_price, description, is_published, sort_order) SELECT gen_random_uuid(), 'Multimedia Storytelling & News Writing', 'W', 10, 'Learn professional news writing, interviewing, storytelling, headline creation, and audience engagement.', true, 5 WHERE NOT EXISTS (SELECT 1 FROM courses WHERE sort_order=5 AND title LIKE '%Multimedia%');
+        CREATE TABLE IF NOT EXISTS modules (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+          title VARCHAR NOT NULL,
+          description TEXT DEFAULT '',
+          sort_order INT DEFAULT 0,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+        ALTER TABLE lessons ADD COLUMN IF NOT EXISTS module_id UUID DEFAULT NULL;
+        ALTER TABLE lessons ADD COLUMN IF NOT EXISTS type VARCHAR DEFAULT 'video';
+        ALTER TABLE lessons ADD COLUMN IF NOT EXISTS content TEXT DEFAULT NULL;
+        ALTER TABLE lessons ADD COLUMN IF NOT EXISTS pdf_url VARCHAR DEFAULT NULL;
       `);
       logger.log('Startup migration: livestreams columns verified');
     } catch (err) {

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { CourseEntity, LessonEntity, EnrollmentEntity } from '../../database/entities';
+import { CourseEntity, LessonEntity, EnrollmentEntity, ModuleEntity } from '../../database/entities';
 
 @Injectable()
 export class CoursesService {
@@ -15,6 +15,8 @@ export class CoursesService {
     private readonly lessonRepo: Repository<LessonEntity>,
     @InjectRepository(EnrollmentEntity)
     private readonly enrollmentRepo: Repository<EnrollmentEntity>,
+    @InjectRepository(ModuleEntity)
+    private readonly moduleRepo: Repository<ModuleEntity>,
     private readonly config: ConfigService,
   ) {
     this.paystackSecret = this.config.get('PAYSTACK_SECRET_KEY', '');
@@ -34,7 +36,9 @@ export class CoursesService {
     const course = await this.courseRepo.findOne({ where: { id }, relations: ['lessons'] });
     if (!course) throw new NotFoundException('Course not found');
     if (course.lessons) course.lessons.sort((a, b) => a.sortOrder - b.sortOrder);
-    return course;
+    // Fetch modules for this course
+    const modules = await this.moduleRepo.find({ where: { courseId: id }, order: { sortOrder: 'ASC' }, relations: ['lessons'] });
+    return { ...course, modules };
   }
 
   // === ADMIN ===
@@ -224,5 +228,28 @@ export class CoursesService {
       order: { createdAt: 'DESC' },
       take: 100,
     });
+  }
+
+  // === MODULES ===
+
+  async createModule(dto: { courseId: string; title: string; description?: string; sortOrder?: number }) {
+    const course = await this.courseRepo.findOne({ where: { id: dto.courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    const module = this.moduleRepo.create(dto);
+    return this.moduleRepo.save(module);
+  }
+
+  async updateModule(id: string, dto: Partial<{ title: string; description: string; sortOrder: number }>) {
+    const module = await this.moduleRepo.findOne({ where: { id } });
+    if (!module) throw new NotFoundException('Module not found');
+    Object.assign(module, dto);
+    return this.moduleRepo.save(module);
+  }
+
+  async deleteModule(id: string) {
+    const module = await this.moduleRepo.findOne({ where: { id } });
+    if (!module) throw new NotFoundException('Module not found');
+    await this.moduleRepo.remove(module);
+    return { deleted: true };
   }
 }
