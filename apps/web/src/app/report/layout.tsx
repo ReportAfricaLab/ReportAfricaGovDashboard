@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1').replace(/[.\\/]+$/, '');
 
-export async function generateMetadata({ searchParams }: { searchParams: Promise<{ id?: string }> }): Promise<Metadata> {
-  const { id } = await searchParams;
+export async function generateMetadata({ searchParams }: { searchParams: { id?: string } }): Promise<Metadata> {
+  const id = searchParams?.id;
   if (!id) return { title: 'Report | ReportAfrica' };
 
   try {
