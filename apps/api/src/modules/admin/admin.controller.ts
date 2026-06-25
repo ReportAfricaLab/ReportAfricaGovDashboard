@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminService } from './admin.service';
@@ -163,22 +163,22 @@ export class AdminController {
   }
 
   @Post('team/invite')
-  inviteAdmin(@Request() req: any, @Body() body: { email: string; role: string }) {
+  inviteAdmin(@Req() req: any, @Body() body: { email: string; role: string }) {
     return this.service.inviteAdmin(req.adminUser, body.email, body.role);
   }
 
   @Patch('team/:id/role')
-  changeRole(@Request() req: any, @Param('id') id: string, @Body() body: { role: string }) {
+  changeRole(@Req() req: any, @Param('id') id: string, @Body() body: { role: string }) {
     return this.service.changeRole(req.adminUser, id, body.role);
   }
 
   @Delete('team/:id')
-  revokeAccess(@Request() req: any, @Param('id') id: string) {
+  revokeAccess(@Req() req: any, @Param('id') id: string) {
     return this.service.revokeAccess(req.adminUser, id);
   }
 
   @Get('me')
-  getMe(@Request() req: any) {
+  getMe(@Req() req: any) {
     return { id: req.adminUser.id, email: req.adminUser.email, username: req.adminUser.username, displayName: req.adminUser.displayName, role: req.adminUser.role };
   }
 }
