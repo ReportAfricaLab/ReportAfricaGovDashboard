@@ -5,7 +5,7 @@ import { electionsAPI } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { theme } from '../theme';
 
-type Tab = 'feed' | 'incidents' | 'results' | 'hotspots';
+type Tab = 'feed' | 'live' | 'incidents' | 'results' | 'hotspots';
 
 const ELECTIONS = ['2027 General Election', '2025 Off-Cycle Governorship'];
 
@@ -23,6 +23,7 @@ export default function ElectionsScreen() {
   const navigation = useNavigation<any>();
   const [tab, setTab] = useState<Tab>('feed');
   const [data, setData] = useState<any[]>([]);
+  const [liveStreams, setLiveStreams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [election, setElection] = useState(ELECTIONS[0]);
 
@@ -34,11 +35,12 @@ export default function ElectionsScreen() {
       let res;
       switch (tab) {
         case 'feed': res = await electionsAPI.getFeed(country, election); break;
+        case 'live': res = await electionsAPI.getLive(country, election); setLiveStreams(Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []); setLoading(false); return;
         case 'incidents': res = await electionsAPI.getIncidents(country); break;
         case 'results': res = await electionsAPI.getResults(country, election); break;
         case 'hotspots': res = await electionsAPI.getHotspots(country, election); break;
       }
-      setData(Array.isArray(res?.data) ? res.data : []);
+      setData(Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
     } catch { setData([]); }
     finally { setLoading(false); }
   };
@@ -87,9 +89,14 @@ export default function ElectionsScreen() {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>🗳️ Election Monitor</Text>
-          <TouchableOpacity style={styles.reportBtn} onPress={() => navigation.navigate('CreateElectionReport')}>
-            <Text style={styles.reportBtnText}>+ Report</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity style={[styles.reportBtn, { backgroundColor: '#000' }]} onPress={() => navigation.navigate('GoLive', { election, state: '' })}>
+              <Text style={styles.reportBtnText}>🔴 Go Live</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.reportBtn} onPress={() => navigation.navigate('CreateElectionReport')}>
+              <Text style={styles.reportBtnText}>+ Report</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.electionSelector}>
           {ELECTIONS.map((e) => (
@@ -101,13 +108,40 @@ export default function ElectionsScreen() {
       </View>
 
       <View style={styles.tabBar}>
-        {([['feed', '📰 Feed'], ['incidents', '⚠️ Incidents'], ['results', '📊 Results'], ['hotspots', '🔥 Hot']] as [Tab, string][]).map(([key, label]) => (
+        {([['feed', '📰 Feed'], ['live', '🔴 Live'], ['incidents', '⚠️ Incidents'], ['results', '📊 Results'], ['hotspots', '🔥 Hot']] as [Tab, string][]).map(([key, label]) => (
           <TouchableOpacity key={key} style={[styles.tab, tab === key && styles.tabActive]} onPress={() => setTab(key)}>
             <Text style={[styles.tabText, tab === key && styles.tabTextActive]}>{label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {tab === 'live' ? (
+        <FlatList
+          data={liveStreams}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyIcon}>🔴</Text>
+              <Text style={styles.emptyTitle}>{loading ? 'Loading...' : 'No election livestreams'}</Text>
+              <Text style={styles.emptyDesc}>Go live from a polling unit during elections</Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('GoLive', { watchStreamId: item.id })}>
+              <View style={styles.cardRow}>
+                <View style={[styles.typeBadge, { backgroundColor: '#DC2626' }]}>
+                  <Text style={styles.typeBadgeText}>🔴 LIVE</Text>
+                </View>
+                {item.electionState && <Text style={styles.stateMeta}>{item.electionState}</Text>}
+                <Text style={[styles.stateMeta, { marginLeft: 'auto' }]}>👁 {item.viewerCount || 0}</Text>
+              </View>
+              <Text style={styles.cardDesc}>{item.title}</Text>
+              <Text style={styles.cardTime}>{item.user?.displayName || 'Anonymous'} · Started {new Date(item.startedAt).toLocaleTimeString()}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
       <FlatList
         data={data}
         keyExtractor={(_, i) => String(i)}
@@ -124,6 +158,7 @@ export default function ElectionsScreen() {
         key={tab === 'hotspots' ? 'grid' : 'list'}
         columnWrapperStyle={tab === 'hotspots' ? styles.hotspotRow : undefined}
       />
+      )}
     </View>
   );
 }

@@ -183,11 +183,13 @@ export class LivestreamService {
   }
 
   async getElectionLiveStreams(country: string, electionName?: string) {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     const qb = this.streamRepo.createQueryBuilder('s')
       .leftJoinAndSelect('s.user', 'user')
       .where('s.country = :country', { country })
       .andWhere('s.category = :category', { category: 'election' })
-      .andWhere('s.status = :status', { status: 'live' });
+      .andWhere('s.status = :status', { status: 'live' })
+      .andWhere('s.startedAt > :twoHoursAgo', { twoHoursAgo });
 
     if (electionName) qb.andWhere('s.electionName = :electionName', { electionName });
 

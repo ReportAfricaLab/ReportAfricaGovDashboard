@@ -39,18 +39,21 @@ export class ElectionService {
     const where: any = { country };
     if (electionName) where.electionName = electionName;
 
-    return this.electionRepo.find({
-      where,
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-      relations: ['user'],
-    });
+    return this.electionRepo.createQueryBuilder('e')
+      .leftJoin('e.user', 'user')
+      .addSelect(['user.id', 'user.displayName', 'user.username', 'user.avatar', 'user.trustLevel', 'user.isCertified'])
+      .where(electionName ? 'e.country = :country AND e.electionName = :electionName' : 'e.country = :country', { country, electionName })
+      .orderBy('e.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
   }
 
   async getIncidents(country: string, page = 1, limit = 20) {
     return this.electionRepo
       .createQueryBuilder('e')
+      .leftJoin('e.user', 'user')
+      .addSelect(['user.id', 'user.displayName', 'user.username', 'user.avatar', 'user.trustLevel'])
       .where('e.country = :country', { country })
       .andWhere('e.type IN (:...types)', { types: ['violence', 'vote_buying', 'intimidation', 'ballot_snatching'] })
       .orderBy('e.createdAt', 'DESC')
