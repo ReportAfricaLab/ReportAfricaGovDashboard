@@ -8,12 +8,13 @@ const CATEGORIES = ['restaurant', 'clinic', 'shop', 'bank', 'fuel_station', 'hot
 
 export default function BusinessPage() {
   const { token, user, isAuthenticated } = useAuth();
-  const [tab, setTab] = useState<'plans' | 'register' | 'my'>('plans');
+  const [tab, setTab] = useState<'plans' | 'register' | 'my' | 'analytics'>('plans');
   const [plans, setPlans] = useState<any[]>([]);
   const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
   const [form, setForm] = useState({ name: '', description: '', category: '', phone: '', email: '', address: '', city: '', state: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [analytics, setAnalytics] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/businesses/plans?country=${user?.country || 'NG'}`).then(r => r.json()).then(setPlans).catch(() => {});
@@ -42,15 +43,25 @@ export default function BusinessPage() {
     } catch { setMessage('Failed'); }
   };
 
+  const loadAnalytics = async (businessId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/businesses/${businessId}/analytics`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (res.ok) setAnalytics(data);
+      else setAnalytics({ error: data.message || 'Failed to load analytics' });
+    } catch { setAnalytics({ error: 'Failed to load' }); }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">🏪 Business Trust Badges</h1>
       <p className="text-gray-500 text-sm mb-6">Get verified, respond to reports, and build customer trust.</p>
 
       <div className="flex gap-2 mb-6">
-        {(['plans', 'register', 'my'] as const).map(t => (
+        {(['plans', 'register', 'my', 'analytics'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 text-sm font-medium rounded-lg ${tab === t ? 'bg-[#0F7B6C] text-white' : 'bg-gray-100 text-gray-600'}`}>
-            {t === 'plans' ? '💎 Plans' : t === 'register' ? '📝 Register' : '🏢 My Businesses'}
+            {t === 'plans' ? '💎 Plans' : t === 'register' ? '📝 Register' : t === 'my' ? '🏢 My Businesses' : '📊 Analytics'}
           </button>
         ))}
       </div>
@@ -119,8 +130,45 @@ export default function BusinessPage() {
                   ))}
                 </div>
               )}
+              {b.isVerified && (
+                <button onClick={() => { setTab('analytics'); loadAnalytics(b.id); }} className="mt-3 text-xs text-[#0F7B6C] font-medium hover:underline">View Analytics →</button>
+              )}
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === 'analytics' && (
+        <div className="space-y-4">
+          {!analytics ? (
+            <div className="text-center py-8">
+              <p className="text-gray-400">Select a business from "My Businesses" to view analytics</p>
+              <button onClick={() => setTab('my')} className="mt-3 text-sm text-[#0F7B6C] font-medium">Go to My Businesses</button>
+            </div>
+          ) : analytics.error ? (
+            <div className="bg-amber-50 rounded-xl p-6 text-center">
+              <p className="text-amber-800 font-medium">{analytics.error}</p>
+              <p className="text-xs text-amber-600 mt-2">Upgrade to Pro or Enterprise to access analytics.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+                  <p className="text-2xl font-bold text-gray-900">{analytics.nearbyReports}</p>
+                  <p className="text-xs text-gray-500">Reports Nearby</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+                  <p className="text-2xl font-bold text-gray-900">{analytics.totalViews?.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">Views on Nearby</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+                  <p className="text-2xl font-bold text-gray-900">{analytics.responsesPosted}</p>
+                  <p className="text-xs text-gray-500">Responses Posted</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">Analytics updates in real-time. Tier: {analytics.tier}</p>
+            </>
+          )}
         </div>
       )}
     </div>

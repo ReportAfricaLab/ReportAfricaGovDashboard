@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BusinessEntity } from '../../database/entities';
+import { BusinessEntity, BusinessResponseEntity, ReportEntity } from '../../database/entities';
 import { PaystackService } from '../donations/paystack.service';
 
 const TIERS = {
@@ -25,6 +25,10 @@ export class BusinessService {
   constructor(
     @InjectRepository(BusinessEntity)
     private readonly businessRepo: Repository<BusinessEntity>,
+    @InjectRepository(BusinessResponseEntity)
+    private readonly responseRepo: Repository<BusinessResponseEntity>,
+    @InjectRepository(ReportEntity)
+    private readonly reportRepo: Repository<ReportEntity>,
     private readonly paystackService: PaystackService,
   ) {}
 
@@ -104,5 +108,64 @@ export class BusinessService {
   async handleWebhook(reference: string, metadata: any) {
     if (metadata?.type !== 'business_subscription') return;
     await this.activateSubscription(metadata.businessId, metadata.tier);
+  }
+
+  async respond(businessId: string, ownerId: string, reportId: string, text: string) {
+    const business = await this.businessRepo.findOne({ where: { id: businessId, ownerId } });
+    if (!business) throw new NotFoundException('Business not found');
+    if (!business.isVerified) throw new ForbiddenException('Business must be subscribed to respond');
+    const existing = await this.responseRepo.findOne({ where: { businessId, reportId } });
+    if (existing) throw new BadRequestException('Already responded to this report');
+    const response = this.responseRepo.create({ businessId, reportId, text });
+    return this.responseRepo.save(response);
+  }
+
+  async getResponse(reportId: string) {
+    return this.responseRepo.find({ where: { reportId }, relations: ['business'] });
+  }
+
+  async getAnalytics(businessId: string, ownerId: string) {
+    const business = await this.businessRepo.findOne({ where: { id: businessId, ownerId } });
+    if (!business) throw new NotFoundException('Business not found');
+    if (business.subscriptionTier === 'none' || business.subscriptionTier === 'basic') {
+      throw new ForbiddenException('Analytics requires Pro or Enterprise plan');
+    }
+
+    const radius = 5 / 111; // ~5km
+    let nearbyReports = 0;
+    let totalViews = 0;
+
+    if (business.latitude && business.longitude) {
+      const result = await this.reportRepo.createQueryBuilder('r')
+        .select('COUNT(*)', 'count')
+        .addSelect('COALESCE(SUM(r.view_count), 0)', 'views')
+        .where('r.latitude BETWEEN :minLat AND :maxLat', { minLat: business.latitude - radius, maxLat: Number(business.latitude) + radius })
+        .andWhere('r.longitude BETWEEN :minLng AND :maxLng', { minLng: business.longitude - radius, maxLng: Number(business.longitude) + radius })
+        .getRawOne();
+      nearbyReports = Number(result?.count) || 0;
+      totalViews = Number(result?.views) || 0;
+    }
+
+    const responses = await this.responseRepo.count({ where: { businessId } });
+
+    return { nearbyReports, totalViews, responsesPosted: responses, tier: business.subscriptionTier };
+  }
+
+  async getPromotedBusinesses(country: string, lat?: number, lng?: number, limit = 3) {
+    const qb = this.businessRepo.createQueryBuilder('b')
+      .where('b.country = :country', { country })
+      .andWhere('b.isVerified = true')
+      .andWhere('b.isActive = true')
+      .andWhere('b.subscriptionTier IN (:...tiers)', { tiers: ['pro', 'enterprise'] })
+      .orderBy('RANDOM()')
+      .take(limit);
+
+    if (lat && lng) {
+      const radius = 10 / 111;
+      qb.andWhere('b.latitude BETWEEN :minLat AND :maxLat', { minLat: lat - radius, maxLat: lat + radius })
+        .andWhere('b.longitude BETWEEN :minLng AND :maxLng', { minLng: lng - radius, maxLng: lng + radius });
+    }
+
+    return qb.getMany();
   }
 }

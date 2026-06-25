@@ -26,6 +26,12 @@ class SubscribeDto {
   @IsString() email: string;
 }
 
+class RespondDto {
+  @IsString() businessId: string;
+  @IsString() reportId: string;
+  @IsString() text: string;
+}
+
 @Controller('businesses')
 export class BusinessController {
   constructor(
@@ -64,6 +70,28 @@ export class BusinessController {
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.service.getById(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('respond')
+  respond(@Request() req: any, @Body() dto: RespondDto) {
+    return this.service.respond(dto.businessId, req.user.id, dto.reportId, dto.text);
+  }
+
+  @Get('response/:reportId')
+  getResponse(@Param('reportId') reportId: string) {
+    return this.service.getResponse(reportId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id/analytics')
+  getAnalytics(@Request() req: any, @Param('id') id: string) {
+    return this.service.getAnalytics(id, req.user.id);
+  }
+
+  @Get('promoted')
+  getPromoted(@Query('country') country: string, @Query('lat') lat?: string, @Query('lng') lng?: string) {
+    return this.service.getPromotedBusinesses(country || 'NG', lat ? Number(lat) : undefined, lng ? Number(lng) : undefined);
   }
 
   @Post('webhook/paystack')

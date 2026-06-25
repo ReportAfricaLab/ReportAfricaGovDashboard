@@ -202,6 +202,15 @@ async function bootstrap() {
         );
         CREATE INDEX IF NOT EXISTS idx_challenge_entries_challenge ON challenge_entries(challenge_id);
         CREATE INDEX IF NOT EXISTS idx_challenge_entries_reporter ON challenge_entries(reporter_id);
+        CREATE TABLE IF NOT EXISTS business_responses (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+          report_id UUID NOT NULL,
+          text TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_business_responses_report ON business_responses(report_id);
+        CREATE INDEX IF NOT EXISTS idx_business_responses_business ON business_responses(business_id);
       `);
       logger.log('Startup migration: livestreams columns verified');
     } catch (err) {

@@ -41,6 +41,7 @@ function ReportContent() {
   const [verifyComment, setVerifyComment] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [translating, setTranslating] = useState(false);
+  const [bizResponses, setBizResponses] = useState<any[]>([]);
   const [frictionModal, setFrictionModal] = useState<{ show: boolean; countdown: number; action: (() => void) | null }>({ show: false, countdown: 3, action: null });
 
   useEffect(() => {
@@ -49,6 +50,7 @@ function ReportContent() {
     api.comments.getByReport(id).then((data) => setComments(data.data || [])).catch(() => {});
     fetchAPI(`/report-updates/report/${id}`).then((data) => setUpdates(data.data || [])).catch(() => {});
     fetchAPI(`/reports/${id}/verify`).then(setVerifyStats).catch(() => {});
+    fetch(`${API_URL}/businesses/response/${id}`).then(r => r.json()).then(d => setBizResponses(Array.isArray(d) ? d : [])).catch(() => {});
     if (token) {
       fetchAPI('/tips/balance', { token }).then((data) => {
         setTipBalance(data.balance || 0);
@@ -363,6 +365,23 @@ function ReportContent() {
           </>
         )}
       </div>
+
+      {/* Business Response */}
+      {bizResponses.length > 0 && (
+        <div className="bg-white rounded-xl border border-green-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">🏪 Business Response</h2>
+          {bizResponses.map((br: any) => (
+            <div key={br.id} className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded">✓ Verified Business</span>
+                <span className="text-sm font-semibold text-gray-900">{br.business?.name}</span>
+              </div>
+              <p className="text-sm text-gray-700">{br.text}</p>
+              <p className="text-xs text-gray-400 mt-2">{new Date(br.createdAt).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Report Updates */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">

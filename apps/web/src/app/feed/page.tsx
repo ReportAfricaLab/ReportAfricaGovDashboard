@@ -51,8 +51,8 @@ const NAV_LINKS = [
   { href: '/watchlist', icon: '📍', label: 'Watchlists' },
 ];
 
-function SponsoredPost() {
-  return (
+function SponsoredPost({ business }: { business?: any }) {
+  if (!business) return (
     <div className="bg-white rounded-xl border border-gray-100 p-5 relative">
       <span className="absolute top-3 right-3 text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded">Sponsored</span>
       <div className="flex items-center gap-3 mb-3">
@@ -66,6 +66,20 @@ function SponsoredPost() {
         <p className="text-sm text-gray-400">Ad Space Available</p>
       </div>
       <p className="text-xs text-gray-400 mt-2">Want to advertise? <Link href="/contact" className="text-[#0F7B6C] font-medium">Contact us</Link></p>
+    </div>
+  );
+  return (
+    <div className="bg-white rounded-xl border border-green-100 p-5 relative">
+      <span className="absolute top-3 right-3 text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">✓ Verified Business</span>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-full bg-[#0F7B6C] flex items-center justify-center text-white text-sm font-bold">{business.name?.[0]}</div>
+        <div>
+          <p className="text-sm font-semibold text-gray-900">{business.name}</p>
+          <p className="text-xs text-gray-500 capitalize">{business.category?.replace('_', ' ')} · {business.city || business.state || ''}</p>
+        </div>
+      </div>
+      {business.description && <p className="text-xs text-gray-600 line-clamp-2">{business.description}</p>}
+      {business.phone && <p className="text-xs text-gray-500 mt-2">📞 {business.phone}</p>}
     </div>
   );
 }
@@ -90,6 +104,7 @@ export default function FeedPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [promoted, setPromoted] = useState<any[]>([]);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -97,6 +112,13 @@ export default function FeedPage() {
       () => {}
     );
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ country });
+    if (location) { params.set('lat', String(location.lat)); params.set('lng', String(location.lng)); }
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/businesses/promoted?${params}`)
+      .then(r => r.json()).then(d => setPromoted(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [country, location]);
 
   useEffect(() => {
     setLoading(true);
@@ -195,8 +217,8 @@ export default function FeedPage() {
               {reports.map((report: any, index: number) => (
                 <div key={report.id}>
                   <ReportCard report={report} />
-                  {/* Insert sponsored post every 5th position */}
-                  {(index + 1) % 5 === 0 && <div className="mt-4"><SponsoredPost /></div>}
+                  {/* Insert promoted business every 5th position */}
+                  {(index + 1) % 5 === 0 && <div className="mt-4"><SponsoredPost business={promoted[Math.floor(index / 5) % promoted.length]} /></div>}
                 </div>
               ))}
             </div>
