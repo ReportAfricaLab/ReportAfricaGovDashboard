@@ -3,8 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, In } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { UserEntity, ReportEntity, CampaignEntity, MediaLicenseEntity, EarningsEntity } from '../../database/entities';
+import { UserEntity, ReportEntity, CampaignEntity, MediaLicenseEntity, EarningsEntity, BusinessEntity, LivestreamEntity, ElectionReportEntity, TipEntity } from '../../database/entities';
+import { ChallengeEntity } from '../../database/entities/challenge.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ChallengesService } from '../challenges/challenges.service';
 
 @Injectable()
 export class AdminService {
@@ -14,8 +16,14 @@ export class AdminService {
     @InjectRepository(CampaignEntity) private readonly campaignRepo: Repository<CampaignEntity>,
     @InjectRepository(MediaLicenseEntity) private readonly licenseRepo: Repository<MediaLicenseEntity>,
     @InjectRepository(EarningsEntity) private readonly earningsRepo: Repository<EarningsEntity>,
+    @InjectRepository(BusinessEntity) private readonly businessRepo: Repository<BusinessEntity>,
+    @InjectRepository(LivestreamEntity) private readonly streamRepo: Repository<LivestreamEntity>,
+    @InjectRepository(ElectionReportEntity) private readonly electionRepo: Repository<ElectionReportEntity>,
+    @InjectRepository(TipEntity) private readonly tipRepo: Repository<TipEntity>,
+    @InjectRepository(ChallengeEntity) private readonly challengeRepo: Repository<ChallengeEntity>,
     @Optional() @Inject(CACHE_MANAGER) private readonly cache?: Cache,
     @Optional() private readonly notifications?: NotificationsService,
+    @Optional() private readonly challengesService?: ChallengesService,
   ) {}
 
   // === USERS ===
@@ -136,21 +144,17 @@ export class AdminService {
 
   // === OVERVIEW ===
   async getOverview() {
-    const [totalUsers, totalReports, totalCampaigns, pendingCampaigns] = await Promise.all([
+    const [totalUsers, totalReports, totalCampaigns, pendingCampaigns, totalBusinesses, activeChallenges, liveStreams] = await Promise.all([
       this.userRepo.count(),
       this.reportRepo.count(),
       this.campaignRepo.count(),
       this.campaignRepo.count({ where: { verificationLevel: 'pending_review' } }),
+      this.businessRepo.count(),
+      this.challengeRepo.count({ where: { status: 'active' } }),
+      this.streamRepo.count({ where: { status: 'live' } }),
     ]);
 
-    const usersByCountry = await this.userRepo
-      .createQueryBuilder('u')
-      .select('u.country', 'country')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('u.country')
-      .getRawMany();
-
-    return { totalUsers, totalReports, totalCampaigns, pendingCampaigns, usersByCountry };
+    return { totalUsers, totalReports, totalCampaigns, pendingCampaigns, totalBusinesses, activeChallenges, liveStreams };
   }
 
   // === CIRCUIT BREAKER ===
@@ -178,5 +182,83 @@ export class AdminService {
       data: { type: 'security_alert', action: 'clear_data' },
     });
     return { sent: true, country };
+  }
+
+  // === BUSINESSES ===
+  async getBusinesses(page = 1, limit = 20, search?: string) {
+    const qb = this.businessRepo.createQueryBuilder('b').orderBy('b.createdAt', 'DESC').skip((page - 1) * limit).take(limit);
+    if (search) qb.where('b.name ILIKE :search', { search: `%${search}%` });
+    const [businesses, total] = await qb.getManyAndCount();
+    return { businesses, total };
+  }
+
+  async updateBusiness(id: string, data: any) {
+    await this.businessRepo.update(id, data);
+    return this.businessRepo.findOne({ where: { id } });
+  }
+
+  // === CHALLENGES ===
+  async getChallenges() {
+    const challenges = await this.challengeRepo.find({ order: { createdAt: 'DESC' }, take: 50 });
+    return { challenges };
+  }
+
+  async forceCloseChallenge(id: string) {
+    const challenge = await this.challengeRepo.findOne({ where: { id } });
+    if (!challenge) throw new NotFoundException('Challenge not found');
+    if (this.challengesService) await this.challengesService.closeAndPayout(challenge);
+    return { closed: true };
+  }
+
+  // === LIVESTREAMS ===
+  async getLivestreams() {
+    const streams = await this.streamRepo.find({ order: { createdAt: 'DESC' }, take: 50, relations: ['user'] });
+    return { streams };
+  }
+
+  async forceEndStream(id: string) {
+    await this.streamRepo.update(id, { status: 'ended', endedAt: new Date() });
+    return { ended: true };
+  }
+
+  // === ELECTIONS ===
+  async getElections() {
+    const reports = await this.electionRepo.find({ order: { createdAt: 'DESC' }, take: 50, relations: ['user'] });
+    return { reports };
+  }
+
+  async verifyObserver(id: string) {
+    await this.electionRepo.update(id, { isVerifiedObserver: true });
+    return { verified: true };
+  }
+
+  // === NOTIFICATIONS ===
+  async sendNotification(data: { target: string; country?: string; username?: string; title: string; body: string }) {
+    if (!this.notifications) return { sent: false };
+    const payload = { title: data.title, body: data.body, data: { type: 'admin_broadcast' } };
+
+    if (data.target === 'all') {
+      const users = await this.userRepo.find({ select: ['fcmToken'] });
+      // Send in batches via country
+      const countries = [...new Set((await this.userRepo.createQueryBuilder('u').select('DISTINCT u.country', 'country').getRawMany()).map((r: any) => r.country))];
+      for (const c of countries) await this.notifications.sendToCountry(c, payload);
+    } else if (data.target === 'country' && data.country) {
+      await this.notifications.sendToCountry(data.country, payload);
+    } else if (data.target === 'businesses') {
+      const businesses = await this.businessRepo.find({ where: { isActive: true }, select: ['ownerId'] });
+      for (const b of businesses) await this.notifications.sendToUser(b.ownerId, payload);
+    } else if (data.target === 'user' && data.username) {
+      const user = await this.userRepo.findOne({ where: { username: data.username } });
+      if (user) await this.notifications.sendToUser(user.id, payload);
+    }
+    return { sent: true, target: data.target };
+  }
+
+  // === TIPS ===
+  async getTips() {
+    const tips = await this.tipRepo.find({ order: { createdAt: 'DESC' }, take: 50, relations: ['sender', 'receiver'] });
+    const totalTips = await this.tipRepo.count();
+    const totalAmountResult = await this.tipRepo.createQueryBuilder('t').select('SUM(t.amount)', 'total').getRawOne();
+    return { tips, stats: { totalTips, totalAmount: Number(totalAmountResult?.total) || 0, platformRevenue: Math.round((Number(totalAmountResult?.total) || 0) * 0.1) } };
   }
 }

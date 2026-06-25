@@ -99,4 +99,60 @@ export class AdminController {
   sendSecurityAlert(@Body() body: { country: string; message?: string }) {
     return this.service.sendSecurityAlert(body.country, body.message);
   }
+
+  // === BUSINESSES ===
+  @Get('businesses')
+  getBusinesses(@Query('page') page?: string, @Query('search') search?: string) {
+    return this.service.getBusinesses(Number(page) || 1, 20, search);
+  }
+
+  @Patch('businesses/:id')
+  updateBusiness(@Param('id') id: string, @Body() body: any) {
+    return this.service.updateBusiness(id, body);
+  }
+
+  // === CHALLENGES ===
+  @Get('challenges')
+  getChallenges() {
+    return this.service.getChallenges();
+  }
+
+  @Patch('challenges/:id/close')
+  closeChallenge(@Param('id') id: string) {
+    return this.service.forceCloseChallenge(id);
+  }
+
+  // === LIVESTREAMS ===
+  @Get('livestreams')
+  getLivestreams() {
+    return this.service.getLivestreams();
+  }
+
+  @Patch('livestreams/:id/end')
+  endLivestream(@Param('id') id: string) {
+    return this.service.forceEndStream(id);
+  }
+
+  // === ELECTIONS ===
+  @Get('elections')
+  getElections() {
+    return this.service.getElections();
+  }
+
+  @Patch('elections/:id/verify-observer')
+  verifyObserver(@Param('id') id: string) {
+    return this.service.verifyObserver(id);
+  }
+
+  // === NOTIFICATIONS ===
+  @Post('notifications/send')
+  sendNotification(@Body() body: { target: string; country?: string; username?: string; title: string; body: string }) {
+    return this.service.sendNotification(body);
+  }
+
+  // === TIPS ===
+  @Get('tips')
+  getTips() {
+    return this.service.getTips();
+  }
 }
