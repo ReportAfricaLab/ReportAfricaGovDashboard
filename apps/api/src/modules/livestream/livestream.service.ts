@@ -150,13 +150,17 @@ export class LivestreamService {
   }
 
   async getLiveStreams(country: string, page = 1, limit = 20) {
-    return this.streamRepo.find({
-      where: { country, status: 'live' },
-      order: { startedAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-      relations: ['user'],
-    });
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    return this.streamRepo.createQueryBuilder('s')
+      .leftJoin('s.user', 'user')
+      .addSelect(['user.id', 'user.displayName', 'user.username', 'user.avatar', 'user.trustLevel'])
+      .where('s.country = :country', { country })
+      .andWhere('s.status = :status', { status: 'live' })
+      .andWhere('s.startedAt > :twoHoursAgo', { twoHoursAgo })
+      .orderBy('s.startedAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
   }
 
   async getStreamById(id: string) {
@@ -164,13 +168,16 @@ export class LivestreamService {
   }
 
   async getRecordings(country: string, page = 1, limit = 20) {
-    return this.streamRepo.find({
-      where: { country, status: 'ended' },
-      order: { endedAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-      relations: ['user'],
-    });
+    return this.streamRepo.createQueryBuilder('s')
+      .leftJoin('s.user', 'user')
+      .addSelect(['user.id', 'user.displayName', 'user.username', 'user.avatar'])
+      .where('s.country = :country', { country })
+      .andWhere('s.status = :status', { status: 'ended' })
+      .andWhere('s.recordingUrl IS NOT NULL')
+      .orderBy('s.endedAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
   }
 
   async getUserStreams(userId: string, page = 1, limit = 20) {

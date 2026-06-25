@@ -109,7 +109,7 @@ function StreamViewer({ stream, token, user, onBack, country }: { stream: Stream
     if (token) {
       livestreamAPI.getById(stream.id).then(() => {
         // Fetch viewer token from API
-        const API_URL = __DEV__ ? 'http://10.162.41.17:3001/api/v1' : 'https://34-242-14-140.nip.io/api/v1';
+        const API_URL = __DEV__ ? 'http://10.162.41.17:3001/api/v1' : 'https://api.reportafrica.africa/api/v1';
         fetch(`${API_URL}/livestream/${stream.id}/viewer-token`, { headers: { Authorization: `Bearer ${token}` } })
           .then(r => r.json())
           .then(data => setViewerToken(data.token))
@@ -162,7 +162,7 @@ function StreamViewer({ stream, token, user, onBack, country }: { stream: Stream
       <View style={{ height: 220, backgroundColor: '#1a1a1a', borderRadius: 12, overflow: 'hidden' }}>
         {viewerToken ? (
           <WebView
-            source={{ uri: `https://reportafrica-web.vercel.app/livekit-mobile?mode=viewer&token=${encodeURIComponent(viewerToken)}&wsUrl=${encodeURIComponent('wss://reportafrica-project-0ankto27.livekit.cloud')}` }}
+            source={{ uri: `https://www.reportafrica.africa/livekit-mobile?mode=viewer&token=${encodeURIComponent(viewerToken)}&wsUrl=${encodeURIComponent('wss://reportafrica-project-0ankto27.livekit.cloud')}` }}
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
             style={{ flex: 1 }}
@@ -287,7 +287,7 @@ function GoLiveTab({ token, user }: { token: string | null; user: any }) {
 
   // Live state with WebView video + chat
   if (isLive && stream) {
-    const broadcastUrl = `https://reportafrica-web.vercel.app/livekit-mobile?mode=broadcaster&token=${encodeURIComponent(stream.streamKeyValue)}&wsUrl=${encodeURIComponent(stream.ingestEndpoint)}`;
+    const broadcastUrl = `https://www.reportafrica.africa/livekit-mobile?mode=broadcaster&token=${encodeURIComponent(stream.streamKeyValue)}&wsUrl=${encodeURIComponent(stream.ingestEndpoint)}`;
     return (
       <KeyboardAvoidingView style={styles.liveContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.liveHeader}>

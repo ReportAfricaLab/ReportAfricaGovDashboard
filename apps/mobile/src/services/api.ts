@@ -108,7 +108,7 @@ export const livestreamAPI = {
     api.post('/livestream/create', data),
   goLive: (id: string) => api.patch(`/livestream/${id}/go-live`),
   end: (id: string) => api.patch(`/livestream/${id}/end`),
-  getActive: (country?: string) => api.get(`/livestream/active${country ? `?country=${country}` : ''}`),
+  getActive: (country?: string) => api.get(`/livestream/live${country ? `?country=${country}` : ''}`),
   getRecordings: (country?: string) => api.get(`/livestream/recordings${country ? `?country=${country}` : ''}`),
   getById: (id: string) => api.get(`/livestream/${id}`),
   getChatHistory: (id: string) => api.get(`/livestream/${id}/chat`),
