@@ -47,7 +47,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex">
-      <aside className="w-64 min-h-screen bg-gray-950 border-r border-gray-800 p-5 fixed overflow-y-auto">
+      <aside className="w-64 h-screen bg-gray-950 border-r border-gray-800 p-5 fixed overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
         <h1 className="text-lg font-bold text-emerald-400 mb-2">🛡️ RA Admin</h1>
         {role && <p className="text-[10px] text-gray-500 mb-6 px-1 capitalize">{role.replace('_', ' ')}</p>}
         <nav className="space-y-0.5 text-sm">
