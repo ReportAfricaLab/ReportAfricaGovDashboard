@@ -9,6 +9,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import Redis from 'ioredis';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { SanitizeInterceptor } from './common/interceptors/sanitize.interceptor';
 import { initSentry, SentryExceptionFilter } from './common/sentry';
 
 async function bootstrap() {
@@ -60,7 +61,7 @@ async function bootstrap() {
   expressApp.use(bodyParser({ limit: '10mb' }));
 
   // Logging & error tracking
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(new LoggingInterceptor(), new SanitizeInterceptor());
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new SentryExceptionFilter(httpAdapterHost.httpAdapter));
 

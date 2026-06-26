@@ -87,10 +87,11 @@ import { TripsModule } from './modules/trips/trips.module';
         ssl: config.get('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false,
         // Connection pooling for scalability
         extra: {
-          max: 20, // max connections in pool
+          max: 50, // max connections in pool
           min: 5,  // min idle connections
           idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 5000,
+          connectionTimeoutMillis: 10000,
+          statement_timeout: 30000, // kill queries running > 30s
         },
       }),
     }),
