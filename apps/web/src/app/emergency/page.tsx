@@ -65,6 +65,16 @@ export default function EmergencyPage() {
           <div className="text-6xl mb-4">✅</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">SOS Alert Sent</h1>
           <p className="text-gray-500 mb-6">Nearby users within 5km have been alerted. Stay safe.</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-left max-w-sm mx-auto">
+            <p className="text-sm font-bold text-red-800 mb-2">📞 Also call emergency services:</p>
+            <div className="space-y-1 text-sm text-red-700">
+              <p><strong>112</strong> — Police / General Emergency</p>
+              <p><strong>767</strong> — Fire Service</p>
+              <p><strong>112</strong> — Ambulance</p>
+              <p><strong>0800-CALL-NEMA</strong> — Disaster Response</p>
+            </div>
+            <p className="text-xs text-red-500 mt-2">Numbers shown for Nigeria. Call your local emergency line if in another country.</p>
+          </div>
           <button onClick={() => { setSent(false); setSelectedType(''); setDescription(''); }}
             className="px-6 py-3 bg-[#0F7B6C] text-white font-semibold rounded-lg hover:bg-[#0B6E4F]">
             Send Another Alert

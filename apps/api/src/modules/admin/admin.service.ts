@@ -279,6 +279,33 @@ export class AdminService {
   private static ADMIN_ROLES = ['super_admin', 'admin', 'content_manager', 'finance_admin', 'support_admin'];
   private static CAN_INVITE = ['super_admin', 'admin'];
 
+  // === STREET CORRESPONDENTS ===
+  async calculateCorrespondents(country: string, city?: string) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const qb = this.reportRepo.createQueryBuilder('r')
+      .select('r.author_id', 'userId')
+      .addSelect('COUNT(*)', 'reportCount')
+      .where('r.country = :country', { country })
+      .andWhere('r.createdAt > :thirtyDaysAgo', { thirtyDaysAgo })
+      .andWhere('r.authorId IS NOT NULL')
+      .groupBy('r.author_id')
+      .orderBy('COUNT(*)', 'DESC')
+      .limit(50);
+
+    const topReporters = await qb.getRawMany();
+    return { correspondents: topReporters, country, period: '30d' };
+  }
+
+  async rewardCorrespondents(country: string, amountPerReporter: number) {
+    const result = await this.calculateCorrespondents(country);
+    let rewarded = 0;
+    for (const c of result.correspondents.slice(0, 50)) {
+      await this.userRepo.increment({ id: c.userId }, 'tipBalance', amountPerReporter);
+      rewarded++;
+    }
+    return { rewarded, amountPerReporter, total: rewarded * amountPerReporter };
+  }
+
   // === AI MODERATION ===
   async getAIDecisions() {
     const reports = await this.reportRepo.find({

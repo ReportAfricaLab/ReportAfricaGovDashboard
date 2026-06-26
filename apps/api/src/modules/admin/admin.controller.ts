@@ -202,4 +202,15 @@ export class AdminController {
   aiOverride(@Param('id') id: string, @Body() body: { action: string }) {
     return this.service.aiOverride(id, body.action);
   }
+
+  // === STREET CORRESPONDENTS ===
+  @Get('correspondents')
+  getCorrespondents(@Query('country') country: string) {
+    return this.service.calculateCorrespondents(country || 'NG');
+  }
+
+  @Post('correspondents/reward')
+  rewardCorrespondents(@Body() body: { country: string; amountPerReporter: number }) {
+    return this.service.rewardCorrespondents(body.country, body.amountPerReporter);
+  }
 }

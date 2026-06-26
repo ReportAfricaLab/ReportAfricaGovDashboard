@@ -232,6 +232,18 @@ async function bootstrap() {
         ALTER TABLE reports ADD COLUMN IF NOT EXISTS ai_headline VARCHAR DEFAULT NULL;
         ALTER TABLE reports ADD COLUMN IF NOT EXISTS ai_moderation_score INT DEFAULT NULL;
         ALTER TABLE reports ADD COLUMN IF NOT EXISTS ai_flags VARCHAR DEFAULT NULL;
+        CREATE TABLE IF NOT EXISTS notification_preferences (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID UNIQUE REFERENCES users(id),
+          min_severity VARCHAR DEFAULT 'low',
+          categories JSONB DEFAULT '[]',
+          quiet_hours_start INT DEFAULT 23,
+          quiet_hours_end INT DEFAULT 6,
+          max_per_hour INT DEFAULT 5,
+          last_sent_count INT DEFAULT 0,
+          last_sent_hour VARCHAR DEFAULT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_notif_prefs_user ON notification_preferences(user_id);
       `);
       logger.log('Startup migration: livestreams columns verified');
     } catch (err) {

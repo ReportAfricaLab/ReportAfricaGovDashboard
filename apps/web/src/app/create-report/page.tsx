@@ -62,6 +62,7 @@ export default function CreateReportPage() {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [voiceLang, setVoiceLang] = useState('en-US');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -123,7 +124,7 @@ export default function CreateReportPage() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
+    recognition.lang = voiceLang;
     recognition.continuous = true;
     recognition.interimResults = true;
 
@@ -269,6 +270,14 @@ export default function CreateReportPage() {
             className={`mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${recording ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}>
             {recording ? '⏹️ Stop Listening' : '🎤 Voice to Text'}
           </button>
+          <select value={voiceLang} onChange={(e) => setVoiceLang(e.target.value)}
+            className="mt-2 ml-2 px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none">
+            <option value="en-US">🇬🇧 English</option>
+            <option value="fr-FR">🇫🇷 French</option>
+            <option value="pcm">🇳🇬 Pidgin</option>
+            <option value="sw">🇰🇪 Swahili</option>
+            <option value="ar-SA">🇪🇬 Arabic</option>
+          </select>
         </div>
 
         {/* Severity */}

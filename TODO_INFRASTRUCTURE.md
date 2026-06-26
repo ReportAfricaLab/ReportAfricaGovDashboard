@@ -27,6 +27,18 @@
 - [ ] Login attempt rate limiting specific to admin (stricter than regular)
 - [ ] Session timeout (auto-logout after 30 min inactivity)
 
+### Emergency SMS Gateway (When budget allows ~$50/month)
+- [ ] Integrate Africa's Talking API or Twilio for SMS
+- [ ] Auto-send SMS to local emergency number on SOS trigger
+- [ ] Include GPS coordinates in SMS body
+- [ ] Country-specific emergency number routing
+
+### Street Correspondent Stipend Automation
+- [ ] Monthly cron job to calculate top 50 per city
+- [ ] Auto-credit tip balance based on available revenue pool
+- [ ] "🏅 Street Correspondent" badge auto-assigned
+- [ ] Dashboard for tracking monthly payouts
+
 ### Scalability (When approaching 50K+ DAU)
 - [ ] Move from single EC2 to ECS/Fargate with auto-scaling (2-5 containers)
 - [ ] Add ALB (Application Load Balancer)
