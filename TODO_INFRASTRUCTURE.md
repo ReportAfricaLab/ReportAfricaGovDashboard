@@ -20,3 +20,17 @@
 - [ ] OG meta tags for other pages (donations/campaign, elections)
 - [ ] Sentry config cleanup (move to instrumentation.ts per warnings)
 - [ ] npm audit fix for 99 vulnerabilities
+
+### Admin 2FA (Add when 50K+ users)
+- [ ] Add TOTP-based 2FA for admin portal (Google Authenticator / Authy)
+- [ ] IP whitelist option for admin routes
+- [ ] Login attempt rate limiting specific to admin (stricter than regular)
+- [ ] Session timeout (auto-logout after 30 min inactivity)
+
+### Scalability (When approaching 50K+ DAU)
+- [ ] Move from single EC2 to ECS/Fargate with auto-scaling (2-5 containers)
+- [ ] Add ALB (Application Load Balancer)
+- [ ] RDS read replicas for heavy read queries
+- [ ] Increase RDS connection pool to 100+
+- [ ] CloudFront CDN for S3 media delivery
+- [ ] Separate Socket.IO to dedicated service

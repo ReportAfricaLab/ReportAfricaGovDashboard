@@ -107,12 +107,24 @@ export default function FeedPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [promoted, setPromoted] = useState<any[]>([]);
 
+  const registerWebPush = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    } catch {}
+  };
+
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     );
-  }, []);
+    // Register web push notifications
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && isAuthenticated) {
+      registerWebPush();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const params = new URLSearchParams({ country });

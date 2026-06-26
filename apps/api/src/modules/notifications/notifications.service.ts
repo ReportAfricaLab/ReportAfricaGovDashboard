@@ -13,7 +13,11 @@ interface NotificationPayload {
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly fcmServerKey: string;
+  private readonly projectId: string;
+  private readonly clientEmail: string;
+  private readonly privateKey: string;
+  private accessToken: string | null = null;
+  private tokenExpiry = 0;
 
   constructor(
     private readonly config: ConfigService,
@@ -22,11 +26,12 @@ export class NotificationsService {
     @InjectRepository(NotificationEntity)
     private readonly notificationRepo: Repository<NotificationEntity>,
   ) {
-    this.fcmServerKey = this.config.get('FCM_SERVER_KEY', '');
+    this.projectId = this.config.get('FIREBASE_PROJECT_ID', '');
+    this.clientEmail = this.config.get('FIREBASE_CLIENT_EMAIL', '');
+    this.privateKey = (this.config.get('FIREBASE_PRIVATE_KEY', '') || '').replace(/\\n/g, '\n');
   }
 
   async sendToUser(userId: string, payload: NotificationPayload) {
-    // Persist to DB
     await this.notificationRepo.save(this.notificationRepo.create({
       userId,
       title: payload.title,
@@ -35,7 +40,6 @@ export class NotificationsService {
       data: payload.data || {},
     }));
 
-    // Send push
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user?.fcmToken) return;
     return this.sendToToken(user.fcmToken, payload);
@@ -45,8 +49,8 @@ export class NotificationsService {
     const users = await this.userRepo.find({ where: { country }, select: ['fcmToken'] });
     const tokens = users.map((u) => u.fcmToken).filter(Boolean);
     if (tokens.length === 0) return;
-    for (let i = 0; i < tokens.length; i += 500) {
-      await this.sendToTokens(tokens.slice(i, i + 500), payload);
+    for (const token of tokens) {
+      await this.sendToToken(token, payload);
     }
   }
 
@@ -59,12 +63,12 @@ export class NotificationsService {
       .andWhere('user.fcmToken IS NOT NULL')
       .getMany();
 
-    const tokens = users.map((u) => u.fcmToken).filter(Boolean);
-    if (tokens.length > 0) await this.sendToTokens(tokens, payload);
+    for (const user of users) {
+      await this.sendToToken(user.fcmToken, payload);
+    }
   }
 
   // === HISTORY ===
-
   async getHistory(userId: string, page = 1, limit = 30) {
     const [data, total] = await this.notificationRepo.findAndCount({
       where: { userId },
@@ -86,24 +90,60 @@ export class NotificationsService {
     return { read: true };
   }
 
+  // === Firebase V1 API ===
   private async sendToToken(token: string, payload: NotificationPayload) {
-    return this.sendToTokens([token], payload);
-  }
+    if (!this.projectId || !this.clientEmail || !this.privateKey) return;
 
-  private async sendToTokens(tokens: string[], payload: NotificationPayload) {
-    if (!this.fcmServerKey) return;
     try {
-      await fetch('https://fcm.googleapis.com/fcm/send', {
+      const accessToken = await this.getAccessToken();
+      await fetch(`https://fcm.googleapis.com/v1/projects/${this.projectId}/messages:send`, {
         method: 'POST',
-        headers: { 'Authorization': `key=${this.fcmServerKey}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          registration_ids: tokens,
-          notification: { title: payload.title, body: payload.body },
-          data: payload.data || {},
+          message: {
+            token,
+            notification: { title: payload.title, body: payload.body },
+            data: payload.data || {},
+            android: { priority: 'high' },
+            apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+          },
         }),
       });
     } catch (error) {
-      this.logger.error('FCM send failed', error);
+      this.logger.error('FCM V1 send failed', error);
     }
+  }
+
+  private async getAccessToken(): Promise<string> {
+    if (this.accessToken && Date.now() < this.tokenExpiry) return this.accessToken;
+
+    const now = Math.floor(Date.now() / 1000);
+    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({
+      iss: this.clientEmail,
+      sub: this.clientEmail,
+      aud: 'https://oauth2.googleapis.com/token',
+      iat: now,
+      exp: now + 3600,
+      scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    })).toString('base64url');
+
+    const crypto = require('crypto');
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(`${header}.${payload}`);
+    const signature = sign.sign(this.privateKey, 'base64url');
+
+    const jwt = `${header}.${payload}.${signature}`;
+
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+
+    const data = await res.json();
+    this.accessToken = data.access_token;
+    this.tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
+    return this.accessToken!;
   }
 }
