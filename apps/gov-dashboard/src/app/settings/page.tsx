@@ -1,13 +1,45 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.africa/api/v1';
+const CATEGORIES = ['emergency', 'traffic', 'police_security', 'government', 'election', 'health', 'corruption', 'environmental', 'gender_violence', 'utilities', 'missing_persons'];
 
 export default function SettingsPage() {
   const [jurisdiction, setJurisdiction] = useState({ country: 'NG', state: '', lga: '' });
-  const [alerts, setAlerts] = useState({ enabled: true, minSeverity: 'high', categories: ['emergency', 'police_security'], threshold: 5 });
+  const [alerts, setAlerts] = useState({ enabled: true, minSeverity: 'high', threshold: 5 });
+  const [categories, setCategories] = useState<string[]>(['emergency', 'police_security']);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    localStorage.setItem('gov_settings', JSON.stringify({ jurisdiction, alerts }));
+  useEffect(() => {
+    const stored = localStorage.getItem('gov_settings');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.jurisdiction) setJurisdiction(parsed.jurisdiction);
+      if (parsed.alerts) setAlerts(parsed.alerts);
+      if (parsed.categories) setCategories(parsed.categories);
+    }
+  }, []);
+
+  const toggleCategory = (cat: string) => {
+    setCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+  };
+
+  const handleSave = async () => {
+    const settings = { jurisdiction, alerts, categories };
+    localStorage.setItem('gov_settings', JSON.stringify(settings));
+
+    // Save to backend
+    const token = localStorage.getItem('gov_token');
+    if (token) {
+      try {
+        await fetch(`${API_URL}/gov/settings`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings),
+        });
+      } catch {}
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -26,7 +58,7 @@ export default function SettingsPage() {
               <label className="text-xs text-gray-400">Country</label>
               <select value={jurisdiction.country} onChange={(e) => setJurisdiction({ ...jurisdiction, country: e.target.value })}
                 className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
-                <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option>
+                <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option><option value="UG">Uganda</option><option value="TZ">Tanzania</option>
               </select>
             </div>
             <div>
@@ -63,6 +95,20 @@ export default function SettingsPage() {
               <input type="number" value={alerts.threshold} onChange={(e) => setAlerts({ ...alerts, threshold: Number(e.target.value) })}
                 className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" min={1} max={50} />
             </div>
+          </div>
+        </div>
+
+        {/* Preferred Categories */}
+        <div className="bg-[#1E293B] rounded-xl p-6 border border-gray-700">
+          <h2 className="font-semibold mb-4">📋 Preferred Categories</h2>
+          <p className="text-xs text-gray-400 mb-3">Select categories you want to monitor. You'll only be alerted for these.</p>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map(cat => (
+              <button key={cat} onClick={() => toggleCategory(cat)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition capitalize ${categories.includes(cat) ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-700 text-gray-400 hover:border-blue-500'}`}>
+                {cat.replace('_', ' ')}
+              </button>
+            ))}
           </div>
         </div>
 

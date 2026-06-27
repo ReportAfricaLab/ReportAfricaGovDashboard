@@ -17,7 +17,10 @@ export default function ReportDetailPage() {
     fetch(`${API_URL}/report-updates/report/${id}`).then(r => r.json()).then(d => setUpdates(d.data || [])).catch(() => {});
   }, [id]);
 
+  // Report detail with map coordinates display
   if (!report) return <p className="text-gray-400 text-center py-20">Loading...</p>;
+
+  const mapUrl = report.latitude ? `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+ff0000(${report.longitude},${report.latitude})/${report.longitude},${report.latitude},13,0/600x200@2x?access_token=pk.eyJ1IjoicmVwb3J0YWZyaWNhIiwiYSI6ImNsdnh4eHh4eDAifQ.placeholder` : null;
 
   return (
     <div className="max-w-3xl">
@@ -30,7 +33,28 @@ export default function ReportDetailPage() {
         </div>
         <h1 className="text-xl font-bold text-gray-100 mb-2">{report.title}</h1>
         {report.aiHeadline && <p className="text-sm text-blue-300 mb-3">🤖 {report.aiHeadline}</p>}
+        {report.aiModerationScore != null && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-gray-500">AI Score:</span>
+            <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${report.aiModerationScore > 70 ? 'bg-red-500' : report.aiModerationScore > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${report.aiModerationScore}%` }} />
+            </div>
+            <span className="text-xs text-gray-400">{report.aiModerationScore}%</span>
+          </div>
+        )}
         <p className="text-gray-300 leading-relaxed mb-4">{report.description}</p>
+
+        {/* Location Map */}
+        {report.latitude && (
+          <div className="mb-4 rounded-lg overflow-hidden bg-gray-800 p-3">
+            <p className="text-xs text-gray-400 mb-2">📍 Location</p>
+            <div className="bg-gray-900 rounded-lg p-4 text-center">
+              <p className="text-sm text-gray-200">{report.state || report.city || 'Unknown area'}</p>
+              <p className="text-xs text-gray-400 mt-1">{Number(report.latitude).toFixed(6)}, {Number(report.longitude).toFixed(6)}</p>
+              <a href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`} target="_blank" className="text-xs text-blue-400 mt-2 inline-block hover:underline">Open in Google Maps →</a>
+            </div>
+          </div>
+        )}
 
         {report.media?.length > 0 && (
           <div className="grid grid-cols-2 gap-2 mb-4">

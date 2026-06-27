@@ -8,7 +8,14 @@ export default function SOSPage() {
   const [country, setCountry] = useState('NG');
 
   const load = () => {
-    fetch(`${API_URL}/emergency/active?country=${country}`).then(r => r.json()).then(d => setAlerts(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch(`${API_URL}/gov/sos/live?country=${country}`).then(r => r.json()).then(d => {
+      const newAlerts = Array.isArray(d) ? d : [];
+      // Audio alert if new emergencies appeared
+      if (newAlerts.length > alerts.length && alerts.length > 0) {
+        try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==').play().catch(() => {}); } catch {}
+      }
+      setAlerts(newAlerts);
+    }).catch(() => {});
   };
 
   useEffect(() => { load(); const i = setInterval(load, 15000); return () => clearInterval(i); }, [country]);

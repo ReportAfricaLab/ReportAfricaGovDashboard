@@ -19,6 +19,11 @@ export class GovService {
     @InjectRepository(CampaignEntity) private readonly campaignRepo: Repository<CampaignEntity>,
   ) {}
 
+  getTierForUser(user: any): { historyDays: number; canExport: boolean; label: string } {
+    const tier = user?.subscriptionTier || 'free';
+    return GOV_TIERS[tier] || GOV_TIERS.free;
+  }
+
   async register(userId: string, dto: { agencyName: string; jurisdiction: string; contactEmail: string }) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');

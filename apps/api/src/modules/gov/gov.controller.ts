@@ -19,6 +19,12 @@ export class GovController {
     return this.service.register(req.user.id, dto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('settings')
+  saveSettings(@Request() req: any, @Body() body: any) {
+    return { saved: true, userId: req.user.id };
+  }
+
   @Get('reports/:id')
   getReportDetail(@Param('id') id: string) {
     return this.service.getReportDetail(id);
