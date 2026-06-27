@@ -1,16 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.africa/api/v1';
+import { govAPI } from '@/lib/api';
+import { useJurisdiction } from '@/lib/useJurisdiction';
 
 export default function SOSPage() {
+  const { country } = useJurisdiction();
   const [alerts, setAlerts] = useState<any[]>([]);
-  const [country, setCountry] = useState('NG');
 
   const load = () => {
-    fetch(`${API_URL}/gov/sos/live?country=${country}`).then(r => r.json()).then(d => {
+    govAPI.sosLive(country).then(d => {
       const newAlerts = Array.isArray(d) ? d : [];
-      // Audio alert if new emergencies appeared
       if (newAlerts.length > alerts.length && alerts.length > 0) {
         try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==').play().catch(() => {}); } catch {}
       }
@@ -25,17 +24,13 @@ export default function SOSPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">🚨 Live SOS Alerts</h1>
-          <p className="text-gray-400 text-sm mt-1">Auto-refreshes every 15 seconds</p>
+          <p className="text-gray-400 text-sm mt-1">Auto-refreshes every 15 seconds — {country}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           <span className="text-xs text-red-400">LIVE</span>
-          <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none ml-3">
-            <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option>
-          </select>
         </div>
       </div>
-
       <div className="space-y-3">
         {alerts.map((r: any) => (
           <a key={r.id} href={`/report/${r.id}`} className="block bg-red-950/30 rounded-xl p-5 border border-red-800 hover:border-red-500 transition">

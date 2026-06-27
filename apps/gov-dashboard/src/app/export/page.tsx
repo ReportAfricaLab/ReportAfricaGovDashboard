@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
+import { useJurisdiction } from '@/lib/useJurisdiction';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.africa/api/v1';
 
 export default function ExportPage() {
-  const [country, setCountry] = useState('NG');
+  const { country, state: jState, isAdmin } = useJurisdiction();
   const [category, setCategory] = useState('');
   const [severity, setSeverity] = useState('');
   const [state, setState] = useState('');
@@ -99,12 +100,7 @@ export default function ExportPage() {
       <p className="text-gray-400 text-sm mb-6">Download incident data as CSV for official reporting</p>
 
       <div className="bg-[#1E293B] rounded-xl p-6 border border-gray-700 max-w-lg space-y-4">
-        <div>
-          <label className="text-sm text-gray-400">Country</label>
-          <select value={country} onChange={(e) => setCountry(e.target.value)} className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
-            <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option>
-          </select>
-        </div>
+        <p className="text-xs text-gray-400">Exporting data for: <span className="text-blue-400 font-medium">{jState || country}</span></p>
         <div>
           <label className="text-sm text-gray-400">Category (optional)</label>
           <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">

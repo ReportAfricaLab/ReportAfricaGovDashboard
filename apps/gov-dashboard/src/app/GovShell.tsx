@@ -44,24 +44,14 @@ export default function GovShell({ children }: { children: React.ReactNode }) {
   };
 
   if (!authed) return null;
-  if (pathname === '/login') return <>{children}</>;n
-  return (
-    <div className="flex">
-      <aside className="w-60 h-screen bg-[#0B1120] border-r border-gray-800 p-5 fixed overflow-y-auto">
-        <h1 className="text-lg font-bold text-blue-400 mb-2">🏛️ Gov Intel</h1>
-        {govUser?.jurisdiction?.country && (
-          <p className="text-[10px] text-gray-500 mb-4">📍 {govUser.jurisdiction.state || ''} {govUser.jurisdiction.country}</p>
-        )}
-        {govUser?.trialActive && govUser?.trialDaysLeft != null && (
-          <div className="mb-4 px-2 py-1.5 bg-amber-900/30 border border-amber-700/30 rounded text-[10px] text-amber-400">
-            🕐 Trial: {govUser.trialDaysLeft} days left
-          </div>
-        )}
-        {govUser?.trialDaysLeft === 0 && govUser?.role === 'gov_agency' && (
-          <div className="mb-4 px-2 py-1.5 bg-red-900/30 border border-red-700/30 rounded text-[10px] text-red-400">
-            ⚠️ Trial expired. <a href="/subscribe" className="underline">Subscribe</a>
-          </div>
-        )}
+  if (pathname === '/login') return <>{children}</>;
+
+  // Pass jurisdiction to pages via data attribute
+  const jurisdiction = govUser?.jurisdiction || { country: 'NG', state: '' };
+  if (typeof window !== 'undefined' && govUser) {
+    (window as any).__govJurisdiction = jurisdiction;
+    (window as any).__govUser = govUser;
+  }
 
   return (
     <div className="flex">

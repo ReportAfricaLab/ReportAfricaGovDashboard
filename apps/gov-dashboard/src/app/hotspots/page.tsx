@@ -1,21 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { govAPI } from '@/lib/api';
+import { useJurisdiction } from '@/lib/useJurisdiction';
 
 export default function HotspotsPage() {
+  const { country } = useJurisdiction();
   const [data, setData] = useState<any[]>([]);
-  const [country, setCountry] = useState('NG');
 
   useEffect(() => { govAPI.hotspots(country).then((d: any) => setData(Array.isArray(d) ? d : d.data || [])).catch(() => {}); }, [country]);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">🔥 Hotspot Areas</h1>
-        <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
-          <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option>
-        </select>
-      </div>
+      <h1 className="text-2xl font-bold mb-2">🔥 Hotspot Areas</h1>
+      <p className="text-gray-400 text-sm mb-6">Areas with highest incident density — {country}</p>
       <div className="grid grid-cols-2 gap-4">
         {data.map((h: any, i: number) => (
           <div key={i} className="bg-[#1E293B] rounded-xl p-5 border border-gray-700">

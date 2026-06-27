@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useJurisdiction } from '@/lib/useJurisdiction';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.africa/api/v1';
 
 export default function LivestreamsPage() {
+  const { country } = useJurisdiction();
   const [streams, setStreams] = useState<any[]>([]);
-  const [country, setCountry] = useState('NG');
 
   useEffect(() => {
     fetch(`${API_URL}/livestream/live?country=${country}`).then(r => r.json()).then(d => setStreams(Array.isArray(d) ? d : [])).catch(() => {});
@@ -13,13 +14,8 @@ export default function LivestreamsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">🔴 Active Livestreams</h1>
-        <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
-          <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option>
-        </select>
-      </div>
-
+      <h1 className="text-2xl font-bold mb-2">🔴 Active Livestreams</h1>
+      <p className="text-gray-400 text-sm mb-6">Live broadcasts — {country}</p>
       <div className="space-y-3">
         {streams.map((s: any) => (
           <div key={s.id} className="bg-[#1E293B] rounded-xl p-5 border border-gray-700">

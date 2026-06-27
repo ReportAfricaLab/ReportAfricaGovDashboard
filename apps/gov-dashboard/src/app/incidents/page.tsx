@@ -1,23 +1,20 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { govAPI } from '@/lib/api';
+import { useJurisdiction } from '@/lib/useJurisdiction';
 
 export default function IncidentsPage() {
+  const { country, state } = useJurisdiction();
   const [data, setData] = useState<any[]>([]);
-  const [country, setCountry] = useState('NG');
 
-  useEffect(() => { govAPI.mapData(country).then((d: any) => setData(d.data || [])).catch(() => {}); }, [country]);
+  useEffect(() => { govAPI.mapData(country, state || undefined).then((d: any) => setData(d.data || [])).catch(() => {}); }, [country, state]);
 
   const incidents = data.filter((r: any) => ['critical', 'high'].includes(r.severity));
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">⚠️ Active Incidents</h1>
-        <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
-          <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option>
-        </select>
-      </div>
+      <h1 className="text-2xl font-bold mb-2">⚠️ Active Incidents</h1>
+      <p className="text-gray-400 text-sm mb-6">Critical and high severity reports — {state || country}</p>
       <div className="space-y-3">
         {incidents.map((r: any) => (
           <a key={r.id} href={`/report/${r.id}`} className="block bg-[#1E293B] rounded-xl p-5 border border-gray-700 hover:border-blue-500 transition">
@@ -28,7 +25,7 @@ export default function IncidentsPage() {
             </div>
             <h3 className="font-medium text-gray-100">{r.title}</h3>
             <p className="text-sm text-gray-400 mt-1 line-clamp-2">{r.description}</p>
-            <p className="text-xs text-gray-500 mt-2">{r.state || r.city || ''} · {r.latitude ? `${Number(r.latitude).toFixed(3)}, ${Number(r.longitude).toFixed(3)}` : 'No coords'}</p>
+            <p className="text-xs text-gray-500 mt-2">{r.state || r.city || ''}</p>
           </a>
         ))}
         {incidents.length === 0 && <p className="text-gray-500 text-center py-12">No active critical/high incidents</p>}

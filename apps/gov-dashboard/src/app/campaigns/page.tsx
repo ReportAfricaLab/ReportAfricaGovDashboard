@@ -1,23 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { govAPI } from '@/lib/api';
+import { useJurisdiction } from '@/lib/useJurisdiction';
 
 export default function CampaignsPage() {
+  const { country } = useJurisdiction();
   const [data, setData] = useState<any>(null);
-  const [country, setCountry] = useState('NG');
 
   useEffect(() => { govAPI.donations(country).then(setData).catch(() => {}); }, [country]);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">💰 Humanitarian Campaigns</h1>
-        <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
-          <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option>
-        </select>
-      </div>
-      <p className="text-gray-400 text-sm mb-6">Active donation campaigns in your jurisdiction</p>
-
+      <h1 className="text-2xl font-bold mb-2">💰 Humanitarian Campaigns</h1>
+      <p className="text-gray-400 text-sm mb-6">Active donation campaigns — {country}</p>
       <div className="space-y-3">
         {data?.campaigns?.map((c: any) => (
           <div key={c.id} className="bg-[#1E293B] rounded-xl p-5 border border-gray-700">
