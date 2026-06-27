@@ -7,6 +7,8 @@ export default function ExportPage() {
   const [country, setCountry] = useState('NG');
   const [category, setCategory] = useState('');
   const [severity, setSeverity] = useState('');
+  const [state, setState] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -18,6 +20,8 @@ export default function ExportPage() {
       const params = new URLSearchParams({ country, page: '1' });
       if (category) params.set('category', category);
       if (severity) params.set('severity', severity);
+      if (state) params.set('state', state);
+      if (dateFrom) params.set('dateFrom', dateFrom);
 
       const res = await fetch(`${API_URL}/reports/feed?${params}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const data = await res.json();
@@ -72,6 +76,16 @@ export default function ExportPage() {
           <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none">
             <option value="">All</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
           </select>
+        </div>
+        <div>
+          <label className="text-sm text-gray-400">State/Region (optional)</label>
+          <input value={state} onChange={(e) => setState(e.target.value)} placeholder="e.g. Lagos"
+            className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
+        </div>
+        <div>
+          <label className="text-sm text-gray-400">From Date (optional)</label>
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm outline-none" />
         </div>
 
         {message && <p className="text-sm">{message}</p>}

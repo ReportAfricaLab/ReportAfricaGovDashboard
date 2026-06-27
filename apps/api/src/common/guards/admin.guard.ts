@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../../database/entities';
 
-const ADMIN_ROLES = ['super_admin', 'admin', 'content_manager', 'finance_admin', 'support_admin', 'moderator'];
+const ADMIN_ROLES = ['super_admin', 'admin', 'content_manager', 'finance_admin', 'support_admin', 'moderator', 'gov_agency'];
 
 @Injectable()
 export class AdminGuard implements CanActivate {

@@ -18,6 +18,7 @@ const NAV = [
   { label: 'Moderation', href: '/moderation', icon: '⚠️', roles: ['super_admin', 'admin', 'content_manager', 'support_admin'] },
   { label: 'AI Moderation', href: '/ai', icon: '🤖', roles: ['super_admin', 'admin', 'content_manager'] },
   { label: 'Team', href: '/team', icon: '🔑', roles: ['super_admin', 'admin'] },
+  { label: 'Gov Agencies', href: '/gov-agencies', icon: '🏛️', roles: ['super_admin', 'admin'] },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

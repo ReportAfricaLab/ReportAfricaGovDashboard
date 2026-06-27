@@ -7,10 +7,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.reportafrica.afr
 export default function ReportDetailPage() {
   const { id } = useParams();
   const [report, setReport] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [updates, setUpdates] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
     fetch(`${API_URL}/reports/${id}`).then(r => r.json()).then(setReport).catch(() => {});
+    fetch(`${API_URL}/comments/report/${id}`).then(r => r.json()).then(d => setComments(d.data || [])).catch(() => {});
+    fetch(`${API_URL}/report-updates/report/${id}`).then(r => r.json()).then(d => setUpdates(d.data || [])).catch(() => {});
   }, [id]);
 
   if (!report) return <p className="text-gray-400 text-center py-20">Loading...</p>;
@@ -53,6 +57,37 @@ export default function ReportDetailPage() {
           <div><span className="text-gray-500">Date:</span> <span className="text-gray-200">{new Date(report.createdAt).toLocaleString()}</span></div>
         </div>
       </div>
+
+      {/* Comments */}
+      {comments.length > 0 && (
+        <div className="bg-[#1E293B] rounded-xl p-6 border border-gray-700 mt-4">
+          <h2 className="font-semibold mb-3">💬 Comments ({comments.length})</h2>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {comments.map((c: any) => (
+              <div key={c.id} className="border-b border-gray-700 pb-2">
+                <p className="text-sm text-gray-200">{c.text}</p>
+                <p className="text-xs text-gray-500 mt-1">{c.user?.displayName || 'User'} · {new Date(c.createdAt).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Updates/Timeline */}
+      {updates.length > 0 && (
+        <div className="bg-[#1E293B] rounded-xl p-6 border border-gray-700 mt-4">
+          <h2 className="font-semibold mb-3">📝 Updates Timeline ({updates.length})</h2>
+          <div className="space-y-2">
+            {updates.map((u: any) => (
+              <div key={u.id} className="border-l-2 border-blue-500 pl-3 py-1">
+                <p className="text-xs text-blue-400 capitalize">{u.type}</p>
+                <p className="text-sm text-gray-200">{u.text}</p>
+                <p className="text-xs text-gray-500">{new Date(u.createdAt).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
