@@ -68,33 +68,71 @@ export class GovService {
     return { feed, incidents, results, total: feed.length };
   }
 
-  async exportCSV(country: string, category?: string, severity?: string, state?: string, dateFrom?: string) {
+  async exportCSV(country: string, category?: string, severity?: string, state?: string, dateFrom?: string, userId?: string) {
+    // Jurisdiction lock
+    const user = userId ? await this.userRepo.findOne({ where: { id: userId } }) : null;
+    const lockedCountry = user?.govJurisdictionCountry || country;
+    const lockedState = user?.govJurisdictionState || state;
+
+    // Trial check
+    if (user?.role === 'gov_agency' && user.govTrialEnd && new Date(user.govTrialEnd) < new Date()) {
+      throw new BadRequestException('Trial expired. Please subscribe to continue.');
+    }
+
     const qb = this.reportRepo.createQueryBuilder('r')
-      .where('r.country = :country', { country })
+      .where('r.country = :country', { country: lockedCountry })
       .andWhere('r.verificationLevel != :deleted', { deleted: 'deleted' })
       .orderBy('r.createdAt', 'DESC')
       .take(500);
 
     if (category) qb.andWhere('r.category = :category', { category });
     if (severity) qb.andWhere('r.severity = :severity', { severity });
-    if (state) qb.andWhere('r.state = :state', { state });
+    if (lockedState) qb.andWhere('r.state = :state', { state: lockedState });
     if (dateFrom) qb.andWhere('r.createdAt >= :dateFrom', { dateFrom: new Date(dateFrom) });
 
     return qb.getMany();
   }
 
-  async getSOSLive(country: string) {
+  async getSOSLive(country: string, userId?: string) {
+    const user = userId ? await this.userRepo.findOne({ where: { id: userId } }) : null;
+    const lockedCountry = user?.govJurisdictionCountry || country;
+
+    if (user?.role === 'gov_agency' && user.govTrialEnd && new Date(user.govTrialEnd) < new Date()) {
+      throw new BadRequestException('Trial expired. Please subscribe to continue.');
+    }
+
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     return this.reportRepo.find({
-      where: { country, category: 'emergency', severity: 'critical', createdAt: MoreThanOrEqual(oneHourAgo) },
+      where: { country: lockedCountry, category: 'emergency', severity: 'critical', createdAt: MoreThanOrEqual(oneHourAgo) },
       order: { createdAt: 'DESC' },
       take: 20,
       relations: ['author'],
     });
   }
 
-  async getCampaigns(country: string) {
-    const campaigns = await this.campaignRepo.find({ where: { country, isActive: true }, order: { createdAt: 'DESC' }, take: 20 });
+  async getElections(country: string, userId?: string) {
+    const user = userId ? await this.userRepo.findOne({ where: { id: userId } }) : null;
+    const lockedCountry = user?.govJurisdictionCountry || country;
+
+    if (user?.role === 'gov_agency' && user.govTrialEnd && new Date(user.govTrialEnd) < new Date()) {
+      throw new BadRequestException('Trial expired. Please subscribe to continue.');
+    }
+
+    const feed = await this.electionRepo.find({ where: { country: lockedCountry }, order: { createdAt: 'DESC' }, take: 50, relations: ['user'] });
+    const incidents = feed.filter(r => ['violence', 'vote_buying', 'intimidation', 'ballot_snatching'].includes(r.type));
+    const results = feed.filter(r => r.type === 'result_upload');
+    return { feed, incidents, results, total: feed.length };
+  }
+
+  async getCampaigns(country: string, userId?: string) {
+    const user = userId ? await this.userRepo.findOne({ where: { id: userId } }) : null;
+    const lockedCountry = user?.govJurisdictionCountry || country;
+
+    if (user?.role === 'gov_agency' && user.govTrialEnd && new Date(user.govTrialEnd) < new Date()) {
+      throw new BadRequestException('Trial expired. Please subscribe to continue.');
+    }
+
+    const campaigns = await this.campaignRepo.find({ where: { country: lockedCountry, isActive: true }, order: { createdAt: 'DESC' }, take: 20 });
     return { campaigns };
   }
 

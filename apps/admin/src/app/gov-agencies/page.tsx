@@ -36,13 +36,24 @@ export default function GovAgenciesPage() {
       <h2 className="font-semibold text-amber-400 mb-3">Pending Approval ({pending.length})</h2>
       <div className="space-y-2 mb-8">
         {pending.map((u: any) => (
-          <div key={u.id} className="bg-gray-800 rounded-xl border border-amber-700/30 p-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium">{u.displayName || u.username}</p>
-              <p className="text-xs text-gray-400">{u.email} · Registered {new Date(u.createdAt).toLocaleDateString()}</p>
+          <div key={u.id} className="bg-gray-800 rounded-xl border border-amber-700/30 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="font-medium">{u.displayName || u.username}</p>
+                <p className="text-xs text-gray-400">{u.email} · Registered {new Date(u.createdAt).toLocaleDateString()}</p>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => handleApprove(u.id)} className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-500">Approve</button>
+            <div className="flex items-center gap-2">
+              <select id={`country-${u.id}`} defaultValue="NG" className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-gray-200">
+                <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option><option value="UG">Uganda</option>
+              </select>
+              <input id={`state-${u.id}`} placeholder="State (optional)" className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-gray-200 w-32" />
+              <button onClick={() => {
+                const country = (document.getElementById(`country-${u.id}`) as HTMLSelectElement)?.value || 'NG';
+                const state = (document.getElementById(`state-${u.id}`) as HTMLInputElement)?.value || '';
+                adminAPI.govApprove(u.id, country, state).then(() => { setMessage('✅ Agency approved'); load(); }).catch((e: any) => setMessage('❌ ' + e.message));
+                setTimeout(() => setMessage(''), 3000);
+              }} className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-500">Approve</button>
               <button onClick={() => handleReject(u.id)} className="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-500">Reject</button>
             </div>
           </div>

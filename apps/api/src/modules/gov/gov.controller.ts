@@ -36,24 +36,28 @@ export class GovController {
     return this.service.getReportDetail(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('elections')
-  getElections(@Query('country') country: string) {
-    return this.service.getElections(country || 'NG');
+  getElections(@Request() req: any, @Query('country') country: string) {
+    return this.service.getElections(country || 'NG', req.user.id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('export/csv')
-  exportCSV(@Query('country') country: string, @Query('category') category?: string, @Query('severity') severity?: string, @Query('state') state?: string, @Query('dateFrom') dateFrom?: string) {
-    return this.service.exportCSV(country || 'NG', category, severity, state, dateFrom);
+  exportCSV(@Request() req: any, @Query('country') country: string, @Query('category') category?: string, @Query('severity') severity?: string, @Query('state') state?: string, @Query('dateFrom') dateFrom?: string) {
+    return this.service.exportCSV(country || 'NG', category, severity, state, dateFrom, req.user.id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('sos/live')
-  getSOSLive(@Query('country') country: string) {
-    return this.service.getSOSLive(country || 'NG');
+  getSOSLive(@Request() req: any, @Query('country') country: string) {
+    return this.service.getSOSLive(country || 'NG', req.user.id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('campaigns')
-  getCampaigns(@Query('country') country: string) {
-    return this.service.getCampaigns(country || 'NG');
+  getCampaigns(@Request() req: any, @Query('country') country: string) {
+    return this.service.getCampaigns(country || 'NG', req.user.id);
   }
 
   // Admin endpoints for managing gov agencies

@@ -99,7 +99,7 @@ export const adminAPI = {
   // Gov Agencies
   govPending: () => adminFetch('/gov/agencies/pending'),
   govAll: () => adminFetch('/gov/agencies/all'),
-  govApprove: (id: string) => adminFetch(`/gov/agencies/${id}/approve`, { method: 'PATCH' }),
+  govApprove: (id: string, country?: string, state?: string) => adminFetch(`/gov/agencies/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ country, state }) }),
   govReject: (id: string) => adminFetch(`/gov/agencies/${id}/reject`, { method: 'PATCH' }),
 
   // Courses (existing)

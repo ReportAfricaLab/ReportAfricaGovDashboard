@@ -50,6 +50,7 @@ const NAV_LINKS = [
   { href: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
   { href: '/watchlist', icon: '📍', label: 'Watchlists' },
   { href: '/safe-trip', icon: '🛡️', label: 'Safe Trip' },
+  { href: '/government', icon: '🏛️', label: 'For Government' },
 ];
 
 function SponsoredPost({ business }: { business?: any }) {
