@@ -113,7 +113,7 @@ export default function GovElectionsPage() {
                   <thead className="bg-gray-800">
                     <tr>
                       <th className="px-3 py-2 text-left text-gray-400">State</th>
-                      {Object.keys(Object.values(parallelData.stateResults)[0]?.parties || {}).map((p: string) => <th key={p} className="px-3 py-2 text-right text-gray-400">{p}</th>)}
+                      {Object.keys((Object.values(parallelData.stateResults)[0] as any)?.parties || {}).map((p: string) => <th key={p} className="px-3 py-2 text-right text-gray-400">{p}</th>)}
                       <th className="px-3 py-2 text-right text-gray-400">PUs</th>
                       <th className="px-3 py-2 text-right text-gray-400">Status</th>
                     </tr>
