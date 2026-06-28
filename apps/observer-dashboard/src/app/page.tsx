@@ -28,11 +28,12 @@ export default function ObserverHome() {
       if (obs.status === 'observer_active') setView('dashboard');
       else if (obs.status === 'observer_approved') setView('pay');
       else if (obs.status === 'observer_pending') setView('pending');
-      else setView('landing');
+      else setView('register');
     } else if (data.statusCode === 401) {
       setView('landing');
     } else {
-      setView(token ? 'register' : 'landing');
+      // Logged in but no observer record — go to observer registration
+      setView('register');
     }
   };
 
@@ -129,7 +130,8 @@ function LoginPage({ onSuccess, onBack }: { onSuccess: () => void; onBack: () =>
 
 // === Register (with accreditation upload) ===
 function RegisterPage({ onSuccess, onBack }: { onSuccess: () => void; onBack: () => void }) {
-  const [step, setStep] = useState<'account' | 'observer'>('account');
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('obs_token');
+  const [step, setStep] = useState<'account' | 'observer'>(hasToken ? 'observer' : 'account');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');

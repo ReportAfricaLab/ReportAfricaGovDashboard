@@ -147,6 +147,15 @@ export class ObserverService {
     return this.observerRepo.save(observer);
   }
 
+  async activate(observerId: string) {
+    const observer = await this.observerRepo.findOne({ where: { id: observerId } });
+    if (!observer) throw new BadRequestException('Not found');
+    observer.status = 'observer_active';
+    observer.paidAt = new Date();
+    observer.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    return this.observerRepo.save(observer);
+  }
+
   async getAllActive() {
     return this.observerRepo.find({ where: { status: 'observer_active' }, relations: ['user'], order: { createdAt: 'DESC' } });
   }
