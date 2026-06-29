@@ -32,8 +32,9 @@ export default function ObserverHome() {
     } else if (data.statusCode === 401) {
       setView('landing');
     } else {
-      // Logged in but no observer record — go to observer registration
-      setView('register');
+      // Logged in but no observer record — show observer registration (Step 2)
+      const hasToken = !!localStorage.getItem('obs_token');
+      setView(hasToken ? 'register' : 'landing');
     }
   };
 
@@ -147,7 +148,6 @@ function RegisterPage({ onSuccess, onBack }: { onSuccess: () => void; onBack: ()
     const data = await observerAPI.register({ email, password, displayName, username: email.split('@')[0], country });
     if (data.token) { localStorage.setItem('obs_token', data.token); setStep('observer'); }
     else if (data.message?.includes('already') || data.message?.includes('exists') || data.statusCode === 409) {
-      // Try login
       const login = await observerAPI.login(email, password);
       if (login.token) { localStorage.setItem('obs_token', login.token); setStep('observer'); }
       else setError('Account exists. Please use the Log In button instead.');
@@ -160,6 +160,7 @@ function RegisterPage({ onSuccess, onBack }: { onSuccess: () => void; onBack: ()
     setLoading(true); setError('');
     const data = await observerAPI.registerObserver({ orgName: orgName || undefined, country, tier, accreditationUrl });
     if (data.id) onSuccess();
+    else if (data.message?.includes('Already registered')) onSuccess();
     else setError(data.message || 'Registration failed');
     setLoading(false);
   };
