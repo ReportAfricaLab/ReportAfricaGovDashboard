@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Image, Modal, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Image, Modal, ScrollView, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/useAppStore';
 import { useI18n } from '../store/useI18n';
@@ -256,6 +256,7 @@ export default function HomeScreen() {
                 { screen: 'Challenges', icon: '💰', label: 'Promo Gigs' },
                 { screen: 'Elections', icon: '🗳️', label: 'Elections' },
                 { screen: 'GoLive', icon: '🔴', label: 'Go Live' },
+                { screen: 'Business', icon: '🏪', label: 'Business' },
                 { screen: 'LicenseRequests', icon: '📄', label: 'Media Licensing' },
                 { screen: 'Leaderboard', icon: '🏆', label: 'Leaderboard' },
                 { screen: 'Earnings', icon: '💰', label: 'My Earnings' },
@@ -264,6 +265,7 @@ export default function HomeScreen() {
                 { screen: 'SafeTrip', icon: '🛡️', label: 'Safe Trip' },
                 { screen: 'Referral', icon: '🎁', label: 'Referral Program' },
                 { screen: 'BuyTipPack', icon: '💳', label: 'Buy Tip Pack' },
+                { screen: 'Subscription', icon: '⭐', label: 'Premium Reporter' },
               ].map((item) => (
                 <TouchableOpacity key={item.screen} style={styles.drawerItem}
                   onPress={() => { setShowDrawer(false); navigation.navigate(item.screen); }}>
@@ -271,6 +273,14 @@ export default function HomeScreen() {
                   <Text style={styles.drawerItemText}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity style={styles.drawerItem} onPress={() => { setShowDrawer(false); Linking.openURL('https://observers.reportafrica.africa'); }}>
+                <Text style={styles.drawerItemIcon}>🗳️</Text>
+                <Text style={styles.drawerItemText}>Election Observers</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.drawerItem} onPress={() => { setShowDrawer(false); Linking.openURL('https://academy.reportafrica.africa'); }}>
+                <Text style={styles.drawerItemIcon}>🎓</Text>
+                <Text style={styles.drawerItemText}>Academy</Text>
+              </TouchableOpacity>
             </ScrollView>
           </View>
         </TouchableOpacity>

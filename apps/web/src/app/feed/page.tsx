@@ -51,6 +51,7 @@ const NAV_LINKS = [
   { href: '/watchlist', icon: '📍', label: 'Watchlists' },
   { href: '/safe-trip', icon: '🛡️', label: 'Safe Trip' },
   { href: '/government', icon: '🏛️', label: 'For Government' },
+  { href: 'https://observers.reportafrica.africa', icon: '🗳️', label: 'Election Observers' },
 ];
 
 function SponsoredPost({ business }: { business?: any }) {
