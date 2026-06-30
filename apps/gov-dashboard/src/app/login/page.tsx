@@ -12,6 +12,7 @@ export default function GovLoginPage() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [agencyName, setAgencyName] = useState('');
+  const [proofUrl, setProofUrl] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -115,10 +116,16 @@ export default function GovLoginPage() {
               className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 outline-none focus:border-blue-500 text-sm" />
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Create password"
               className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 outline-none focus:border-blue-500 text-sm" />
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Proof of Agency (official letter, staff ID, or verification document)</label>
+              <input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} required placeholder="https://... (paste document URL or upload link)"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 outline-none focus:border-blue-500 text-sm" />
+            </div>
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 disabled:opacity-50 text-sm">
               {loading ? 'Submitting...' : 'Register Agency'}
             </button>
+            <p className="text-[10px] text-gray-500 text-center">Your registration will be reviewed. We verify all agencies to prevent misuse.</p>
           </form>
         )}
 
