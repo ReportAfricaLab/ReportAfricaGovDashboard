@@ -43,6 +43,9 @@ export default function GovAgenciesPage() {
                 <p className="text-xs text-gray-400">{u.email} · Registered {new Date(u.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
+            {u.govProofUrl && (
+              <a href={u.govProofUrl} target="_blank" className="text-xs text-emerald-400 hover:underline block mb-3">📎 View proof of agency document</a>
+            )}
             <div className="flex items-center gap-2">
               <select id={`country-${u.id}`} defaultValue="NG" className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-gray-200">
                 <option value="NG">Nigeria</option><option value="GH">Ghana</option><option value="KE">Kenya</option><option value="ZA">South Africa</option><option value="UG">Uganda</option>

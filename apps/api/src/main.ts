@@ -270,6 +270,7 @@ async function bootstrap() {
         CREATE INDEX IF NOT EXISTS idx_observers_user ON observers(user_id);
         CREATE INDEX IF NOT EXISTS idx_observers_country ON observers(country);
         CREATE INDEX IF NOT EXISTS idx_observers_status ON observers(status);
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS gov_proof_url VARCHAR DEFAULT NULL;
       `);
       logger.log('Startup migration: livestreams columns verified');
     } catch (err) {

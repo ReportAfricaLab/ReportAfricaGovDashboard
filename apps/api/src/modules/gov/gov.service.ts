@@ -30,12 +30,12 @@ export class GovService {
     return GOV_TIERS[tier] || GOV_TIERS.free;
   }
 
-  async register(userId: string, dto: { agencyName: string; jurisdiction: string; contactEmail: string }) {
+  async register(userId: string, dto: { agencyName: string; jurisdiction: string; contactEmail: string; proofUrl?: string }) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.role === 'gov_agency') throw new BadRequestException('Already registered as agency');
 
-    await this.userRepo.update(userId, { role: 'gov_pending' });
+    await this.userRepo.update(userId, { role: 'gov_pending', govProofUrl: dto.proofUrl || null } as any);
     return { registered: true, status: 'pending_approval', message: 'Your agency registration is pending admin approval.' };
   }
 
@@ -137,7 +137,7 @@ export class GovService {
 
   // Admin methods for managing gov agencies
   async getPendingAgencies() {
-    return this.userRepo.find({ where: { role: 'gov_pending' as any }, select: ['id', 'email', 'username', 'displayName', 'createdAt'] });
+    return this.userRepo.find({ where: { role: 'gov_pending' as any }, select: ['id', 'email', 'username', 'displayName', 'createdAt', 'govProofUrl'] });
   }
 
   async approveAgency(userId: string, country?: string, state?: string) {

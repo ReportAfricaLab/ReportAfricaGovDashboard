@@ -115,6 +115,9 @@ export class UserEntity {
   @Column({ name: 'gov_trial_end', nullable: true })
   govTrialEnd: Date;
 
+  @Column({ name: 'gov_proof_url', nullable: true })
+  govProofUrl: string;
+
   @Column({ name: 'is_email_verified', default: false })
   isEmailVerified: boolean;
 

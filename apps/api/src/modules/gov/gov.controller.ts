@@ -7,6 +7,7 @@ class RegisterAgencyDto {
   @IsString() agencyName: string;
   @IsString() jurisdiction: string;
   @IsString() contactEmail: string;
+  @IsString() @IsOptional() proofUrl?: string;
 }
 
 @Controller('gov')

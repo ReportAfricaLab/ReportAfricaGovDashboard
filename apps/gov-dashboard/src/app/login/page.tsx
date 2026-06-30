@@ -67,7 +67,7 @@ export default function GovLoginPage() {
       const govRes = await fetch(`${API_URL}/gov/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ agencyName, jurisdiction: 'national', contactEmail: email }),
+        body: JSON.stringify({ agencyName, jurisdiction: 'national', contactEmail: email, proofUrl }),
       }).then(r => r.json());
 
       if (govRes.registered || govRes.message?.includes('Already')) {
