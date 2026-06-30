@@ -5,6 +5,7 @@ import { RTLWrapper } from '@/lib/rtl-wrapper';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { PushNotificationRegister } from '@/components/PushNotificationRegister';
 
 export const viewport: Viewport = {
   themeColor: '#0F7B6C',
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </RTLWrapper>
         </AuthProvider>
         <ServiceWorkerRegister />
+        <PushNotificationRegister />
       </body>
     </html>
   );

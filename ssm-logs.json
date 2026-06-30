@@ -1,8 +1,0 @@
-{
-  "DocumentName": "AWS-RunShellScript",
-  "InstanceIds": ["i-0ecc5db4a49c5aaef"],
-  "Parameters": {
-    "commands": ["docker logs reportafrica-api --tail 50 2>&1"]
-  },
-  "TimeoutSeconds": 30
-}
